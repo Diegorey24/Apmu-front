@@ -4,6 +4,7 @@ import DashboardLayout from './pages/DashboardLayout';
 import DashboardHome from './pages/DashboardHome';
 import Afiliados from './pages/Afiliados';
 import Autores from './pages/Autores';
+import Rubros from './pages/Rubros';
 import ProtectedRoute from './components/ProtectedRoute';
 
 function App() {
@@ -22,6 +23,7 @@ function App() {
           <Route index element={<DashboardHome />} />
           <Route path="afiliados" element={<Afiliados />} />
           <Route path="autores" element={<Autores />} />
+          <Route path="rubros" element={<Rubros />} />
         </Route>
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>

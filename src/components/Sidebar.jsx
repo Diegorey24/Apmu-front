@@ -21,7 +21,9 @@ function Sidebar({ isOpen, onClose }) {
       <nav className="sidebar-nav">
         <NavLink to="/dashboard" end onClick={handleNav}>Dashboard</NavLink>
         <NavLink to="/dashboard/afiliados" onClick={handleNav}>Afiliados</NavLink>
+        <NavLink to="/dashboard/rubros" onClick={handleNav}>Rubros</NavLink>
         <NavLink to="/dashboard/autores" onClick={handleNav}>Autores</NavLink>
+        
       </nav>
       <button className="sidebar-logout" onClick={logout}>Cerrar sesión</button>
     </aside>
