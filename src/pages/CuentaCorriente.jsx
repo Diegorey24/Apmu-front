@@ -134,6 +134,11 @@ useEffect(() => {
   const handleSave = async (e) => {
     e.preventDefault();
     setFormError('');
+    if (parseFloat(form.Importe) <= 0) {
+    setFormError('El importe debe ser mayor a 0.');
+    setSaving(false);
+    return;
+    }
     setSaving(true);
     try {
       const aniomes = buildAniomes(form.Anio, form.Mes);
@@ -165,6 +170,16 @@ useEffect(() => {
   const handleCobrar = async (e) => {
     e.preventDefault();
     setFormError('');
+    if (parseInt(formCobro.NroRecibo) <= 0) {
+    setFormError('El número de recibo debe ser mayor a 0.');
+    setSaving(false);
+    return;
+    }
+    if (new Date(formCobro.FechaPago) > new Date()) {
+    setFormError('La fecha de pago no puede ser futura.');
+    setSaving(false);
+    return;
+    }
     setSaving(true);
     try {
       await cobrarCargo(modal.record.Id, {

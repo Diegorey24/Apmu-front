@@ -168,6 +168,16 @@ const loadMovimientos = async (idAfiliado) => {
 const handleSaveCargo = async (e) => {
   e.preventDefault();
   setErrorCargo('');
+  if (!formCargo.Rubro) {
+    setErrorCargo('Debés seleccionar un rubro.');
+    setSavingCargo(false);
+    return;
+  }
+  if (formCargo.Importe !== '' && parseFloat(formCargo.Importe) <= 0) {
+    setErrorCargo('El importe debe ser mayor a 0.');
+    setSavingCargo(false);
+    return;
+  }
   setSavingCargo(true);
   try {
     const { Anio, Mes } = formCargo;
