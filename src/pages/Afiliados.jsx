@@ -1,6 +1,9 @@
 import { useState, useEffect, useRef } from 'react';
 import { getAfiliados, createAfiliado, updateAfiliado, deleteAfiliado } from '../api/afiliados';
+import { getCuentaCorriente, createCargo } from '../api/cuentacorriente';
+import { getRubros } from '../api/rubros';
 import Modal from '../components/Modal';
+import { useNavigate } from 'react-router-dom';
 
 const LIMIT = 20;
 
@@ -21,6 +24,7 @@ const nombreCompleto = (a) =>
     .filter(Boolean).join(' ');
 
 function Afiliados() {
+  const navigate = useNavigate();
   const [data, setData] = useState([]);
   const [total, setTotal] = useState(0);
   const [page, setPage] = useState(1);
@@ -31,6 +35,13 @@ function Afiliados() {
   const [form, setForm] = useState(EMPTY);
   const [formError, setFormError] = useState('');
   const [saving, setSaving] = useState(false);
+  const [movimientos, setMovimientos]   = useState([]);
+  const [rubros, setRubros]             = useState([]);
+  const [loadingMov, setLoadingMov]     = useState(false);
+  const [modalCargo, setModalCargo]     = useState(false);
+  const [formCargo, setFormCargo]       = useState({ Rubro: '', Importe: '', Mes: '', Anio: '', FechaVto: '' });
+  const [errorCargo, setErrorCargo]     = useState('');
+  const [savingCargo, setSavingCargo]   = useState(false);
   const timerRef = useRef(null);
   const totalPages = Math.ceil(total / LIMIT);
 
@@ -70,32 +81,33 @@ function Afiliados() {
     setModal({ mode: 'create', record: null });
   };
 
-  const openEdit = (record) => {
-    setForm({
-      Documento: record.Documento || '',
-      PrimerNombre: record.PrimerNombre || '',
-      SegundoNombre: record.SegundoNombre || '',
-      PrimerApellido: record.PrimerApellido || '',
-      SegundoApellido: record.SegundoApellido || '',
-      FechaNacimiento: toDateInput(record.FechaNacimiento),
-      FechaFallecimiento: toDateInput(record.FechaFallecimiento),
-      Sexo: record.Sexo?.trim() || '',
-      EstadoCivil: record.EstadoCivil?.trim() || '',
-      Mail: record.Mail || '',
-      Celular: record.Celular?.trim() || '',
-      Telefono: record.Telefono?.trim() || '',
-      TelefonoTrabajo: record.TelefonoTrabajo?.trim() || '',
-      Domicilio: record.Domicilio || '',
-      Ciudad: record.Ciudad || '',
-      Localidad: record.Localidad || '',
-      CodigoPostal: record.CodigoPostal?.trim() || '',
-      Departamento: record.Departamento?.trim() || '',
-      Observacion: record.Observacion || '',
-    });
-    setFormError('');
-    setModal({ mode: 'edit', record });
-  };
-
+const openEdit = (record) => {
+  setForm({
+    Documento: record.Documento || '',
+    PrimerNombre: record.PrimerNombre || '',
+    SegundoNombre: record.SegundoNombre || '',
+    PrimerApellido: record.PrimerApellido || '',
+    SegundoApellido: record.SegundoApellido || '',
+    FechaNacimiento: toDateInput(record.FechaNacimiento),
+    FechaFallecimiento: toDateInput(record.FechaFallecimiento),
+    Sexo: record.Sexo?.trim() || '',
+    EstadoCivil: record.EstadoCivil?.trim() || '',
+    Mail: record.Mail || '',
+    Celular: record.Celular?.trim() || '',
+    Telefono: record.Telefono?.trim() || '',
+    TelefonoTrabajo: record.TelefonoTrabajo?.trim() || '',
+    Domicilio: record.Domicilio || '',
+    Ciudad: record.Ciudad || '',
+    Localidad: record.Localidad || '',
+    CodigoPostal: record.CodigoPostal?.trim() || '',
+    Departamento: record.Departamento?.trim() || '',
+    Observacion: record.Observacion || '',
+  });
+  setFormError('');
+  setModal({ mode: 'edit', record });
+  loadMovimientos(record.Id);
+  getRubros().then(r => setRubros(r.data.data || []));
+};
   const closeModal = () => setModal(null);
 
   const handleChange = (e) => {
@@ -131,6 +143,53 @@ function Afiliados() {
       alert('Error al dar de baja.');
     }
   };
+  
+  const meses = [
+  { v: '01', l: 'Enero' }, { v: '02', l: 'Febrero' }, { v: '03', l: 'Marzo' },
+  { v: '04', l: 'Abril' }, { v: '05', l: 'Mayo' },    { v: '06', l: 'Junio' },
+  { v: '07', l: 'Julio' }, { v: '08', l: 'Agosto' },  { v: '09', l: 'Setiembre' },
+  { v: '10', l: 'Octubre' },{ v: '11', l: 'Noviembre' },{ v: '12', l: 'Diciembre' },
+];
+const anioActual = new Date().getFullYear();
+const anios = Array.from({ length: 10 }, (_, i) => anioActual - i);
+
+const loadMovimientos = async (idAfiliado) => {
+  setLoadingMov(true);
+  try {
+    const res = await getCuentaCorriente({ idAfiliado, limit: 10, page: 1 });
+    setMovimientos(res.data.data || []);
+  } catch {
+    setMovimientos([]);
+  } finally {
+    setLoadingMov(false);
+  }
+};
+
+const handleSaveCargo = async (e) => {
+  e.preventDefault();
+  setErrorCargo('');
+  setSavingCargo(true);
+  try {
+    const { Anio, Mes } = formCargo;
+    if (!Anio || !Mes) { setErrorCargo('Mes y año son requeridos.'); setSavingCargo(false); return; }
+    const aniomes = parseInt(`${Anio}${String(Mes).padStart(2, '0')}`);
+    await createCargo({
+      IdAfiliado: modal.record.Id,
+      Rubro:      parseInt(formCargo.Rubro),
+      Importe:    formCargo.Importe !== '' ? parseFloat(formCargo.Importe) : null,
+      Aniomes:    aniomes,
+      Mes:        `${Anio}-${String(Mes).padStart(2, '0')}-01`,
+      FechaVto:   formCargo.FechaVto || null,
+    });
+    setModalCargo(false);
+    setFormCargo({ Rubro: '', Importe: '', Mes: '', Anio: '', FechaVto: '' });
+    loadMovimientos(modal.record.Id);
+  } catch (err) {
+    setErrorCargo(err.response?.data?.message || 'Error al guardar.');
+  } finally {
+    setSavingCargo(false);
+  }
+};
 
   return (
     <div className="page">
@@ -181,6 +240,9 @@ function Afiliados() {
                   <div className="td-actions">
                     <button className="btn-sm" onClick={() => openEdit(a)}>Editar</button>
                     <button className="btn-sm danger" onClick={() => handleBaja(a.Id)}>Dar de baja</button>
+                    <button className="btn-sm" onClick={() => navigate(`/dashboard/cuenta-corriente?idAfiliado=${a.Id}`)}>
+                      Cuenta corriente
+                    </button>
                   </div>
                 </td>
               </tr>
@@ -334,6 +396,58 @@ function Afiliados() {
                 <label htmlFor="Observacion">Observación</label>
                 <textarea id="Observacion" name="Observacion" value={form.Observacion} onChange={handleChange} rows={3} />
               </div>
+              <p className="section-title">Cuenta corriente</p>
+
+            <div className="form-group full">
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+                <span style={{ fontSize: '13px', color: 'var(--color-text-secondary)' }}>
+                  Últimos 10 movimientos
+                </span>
+                <div style={{ display: 'flex', gap: '8px' }}>
+                  <button type="button" className="btn-sm" onClick={() => {
+                    setFormCargo({ Rubro: '', Importe: '', Mes: '', Anio: '', FechaVto: '' });
+                    setErrorCargo('');
+                    setModalCargo(true);
+                  }}>+ Nuevo cargo</button>
+                  <button type="button" className="btn-sm" onClick={() => {
+                    closeModal();
+                    navigate(`/dashboard/cuenta-corriente?idAfiliado=${modal.record.Id}`);
+                  }}>Ver todos</button>
+                </div>
+              </div>
+
+              {loadingMov ? (
+                <p style={{ fontSize: '13px', color: 'var(--color-text-secondary)' }}>Cargando…</p>
+              ) : movimientos.length === 0 ? (
+                <p style={{ fontSize: '13px', color: 'var(--color-text-secondary)' }}>Sin movimientos.</p>
+              ) : (
+                <table style={{ width: '100%', fontSize: '13px' }}>
+                  <thead>
+                    <tr>
+                      <th>Rubro</th>
+                      <th>Importe</th>
+                      <th>Período</th>
+                      <th>Estado</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {movimientos.map(m => {
+                      const s = String(m.Aniomes);
+                      const mesesNombres = ['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Set','Oct','Nov','Dic'];
+                      const periodo = m.Aniomes ? `${mesesNombres[parseInt(s.substring(4,6))-1]} ${s.substring(0,4)}` : '—';
+                      return (
+                        <tr key={m.Id}>
+                          <td>{m.RubDsc?.trim() || m.Rubro}</td>
+                          <td>{m.Importe != null ? `$ ${Number(m.Importe).toFixed(2)}` : '—'}</td>
+                          <td>{periodo}</td>
+                          <td>{m.NroRecibo ? <span className="badge badge-ok">Pagado</span> : <span className="badge badge-pending">Pendiente</span>}</td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              )}
+            </div>
             </div>
 
             {formError && <p className="alert alert-error" style={{ marginTop: '16px' }}>{formError}</p>}
@@ -347,8 +461,80 @@ function Afiliados() {
           </form>
         </Modal>
       )}
+
+{modalCargo && modal?.mode === 'edit' && (
+  <Modal title="Nuevo cargo" onClose={() => setModalCargo(false)}>
+    <form onSubmit={handleSaveCargo}>
+      <div className="form-grid">
+
+        <div className="form-group full" style={{ background: 'var(--color-background-secondary)', padding: '12px', borderRadius: '8px' }}>
+          <p style={{ margin: 0, fontWeight: 500 }}>
+            {modal.record.PrimerNombre} {modal.record.PrimerApellido}
+          </p>
+          <p style={{ margin: '4px 0 0', fontSize: '13px', color: 'var(--color-text-secondary)' }}>
+            Doc: {modal.record.Documento}
+          </p>
+        </div>
+
+        <div className="form-group full">
+          <label htmlFor="cc-Rubro">Rubro *</label>
+          <select id="cc-Rubro" value={formCargo.Rubro}
+            onChange={e => setFormCargo(f => ({ ...f, Rubro: e.target.value }))} required>
+            <option value="">— Seleccioná —</option>
+            {rubros.map(r => (
+              <option key={r.RubCod} value={r.RubCod}>{r.RubDsc?.trim()}</option>
+            ))}
+          </select>
+        </div>
+
+        <div className="form-group">
+          <label htmlFor="cc-Importe">Importe</label>
+          <input id="cc-Importe" type="number" step="0.01" min="0"
+            value={formCargo.Importe}
+            onChange={e => setFormCargo(f => ({ ...f, Importe: e.target.value }))} />
+        </div>
+
+        <div className="form-group">
+          <label htmlFor="cc-FechaVto">Fecha de vencimiento</label>
+          <input type="date" id="cc-FechaVto"
+            value={formCargo.FechaVto}
+            onChange={e => setFormCargo(f => ({ ...f, FechaVto: e.target.value }))} />
+        </div>
+
+        <div className="form-group">
+          <label htmlFor="cc-Mes">Mes *</label>
+          <select id="cc-Mes" value={formCargo.Mes}
+            onChange={e => setFormCargo(f => ({ ...f, Mes: e.target.value }))} required>
+            <option value="">— Mes —</option>
+            {meses.map(m => <option key={m.v} value={m.v}>{m.l}</option>)}
+          </select>
+        </div>
+
+        <div className="form-group">
+          <label htmlFor="cc-Anio">Año *</label>
+          <select id="cc-Anio" value={formCargo.Anio}
+            onChange={e => setFormCargo(f => ({ ...f, Anio: e.target.value }))} required>
+            <option value="">— Año —</option>
+            {anios.map(a => <option key={a} value={a}>{a}</option>)}
+          </select>
+        </div>
+
+      </div>
+
+      {errorCargo && <p className="alert alert-error" style={{ marginTop: '16px' }}>{errorCargo}</p>}
+
+      <div className="modal-footer">
+        <button type="button" className="btn-sm btn-cancel" onClick={() => setModalCargo(false)}>Cancelar</button>
+        <button type="submit" className="btn-primary btn-inline" disabled={savingCargo}>
+          {savingCargo ? 'Guardando…' : 'Guardar'}
+        </button>
+      </div>
+    </form>
+  </Modal>
+)}
+
     </div>
-  );
+  )
 }
 
 export default Afiliados;

@@ -3,6 +3,7 @@ import { getCuentaCorriente, createCargo, updateCargo, cobrarCargo, deleteCargo 
 import { getAfiliados } from '../api/afiliados';
 import { getRubros } from '../api/rubros';
 import Modal from '../components/Modal';
+import { useSearchParams } from 'react-router-dom';
 
 const LIMIT = 20;
 
@@ -42,6 +43,7 @@ function CuentaCorriente() {
   const [formCobro, setFormCobro] = useState(EMPTY_COBRO);
   const [formError, setFormError] = useState('');
   const [saving, setSaving]       = useState(false);
+  const [searchParams] = useSearchParams();
 
   const searchTimer = useRef(null);
   const totalPages  = Math.ceil(total / LIMIT);
@@ -71,10 +73,12 @@ function CuentaCorriente() {
     }
   };
 
-  useEffect(() => {
-    load(1);
-    getRubros().then(r => setRubros(r.data.data || []));
-  }, []);
+useEffect(() => {
+  const idFromUrl = searchParams.get('idAfiliado');
+  if (idFromUrl) setFiltroAfiliado(idFromUrl);
+  load(1);
+  getRubros().then(r => setRubros(r.data.data || []));
+}, []);
 
   const handleFiltroAfiliado = (val) => {
     setFiltroAfiliado(val);
@@ -265,7 +269,7 @@ function CuentaCorriente() {
                 const meses = ['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Set','Oct','Nov','Dic'];
                 const mes = parseInt(s.substring(4, 6)) - 1;
                 const anio = s.substring(0, 4);
-                return `${meses[mes]} ${anio}`;
+                return `${meses[mes]}a ${anio}`;
                 })() : '—'}</td>
                 <td>{row.FechaVto ? row.FechaVto.substring(0, 10) : '—'}</td>
                 <td>{estadoBadge(row)}</td>
