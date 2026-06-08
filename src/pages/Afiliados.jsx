@@ -4,6 +4,7 @@ import { getCuentaCorriente, createCargo } from '../api/cuentacorriente';
 import { getRubros } from '../api/rubros';
 import Modal from '../components/Modal';
 import { useNavigate } from 'react-router-dom';
+import { validate_ci, validate_mail, validate_celular } from '../utils/validaciones';
 
 const LIMIT = 20;
 
@@ -118,6 +119,18 @@ const openEdit = (record) => {
   const handleSave = async (e) => {
     e.preventDefault();
     setFormError('');
+    if (form.Documento && !validate_ci(form.Documento)) {
+      setFormError('La cédula ingresada no es válida.');
+      return;
+    }
+    if (form.Mail && !validate_mail(form.Mail)) {
+      setFormError('El mail ingresado no es válido.');
+      return;
+    }
+    if (form.Celular && !validate_celular(form.Celular)) {
+      setFormError('El celular debe tener formato 09XXXXXXX (9 dígitos).');
+      return;
+    }
     setSaving(true);
     try {
       if (modal.mode === 'create') {
