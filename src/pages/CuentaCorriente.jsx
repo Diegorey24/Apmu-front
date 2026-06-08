@@ -53,31 +53,37 @@ function CuentaCorriente() {
     return parseInt(`${anio}${String(mes).padStart(2, '0')}`);
   };
 
-  const load = async (p = 1) => {
-    setLoading(true);
-    setPageError('');
-    try {
-      const aniomes = buildAniomes(filtroAnio, filtroMes);
-      const res = await getCuentaCorriente({
-        page: p, limit: LIMIT,
-        ...(filtroAfiliado && { idAfiliado: filtroAfiliado }),
-        ...(aniomes         && { aniomes }),
-        ...(filtroEstado    && { estado: filtroEstado }),
-      });
-      setData(res.data.data || []);
-      setTotal(res.data.total || 0);
-    } catch {
-      setPageError('Error al cargar movimientos.');
-    } finally {
-      setLoading(false);
-    }
-  };
+const load = async (p = 1, idAfiliadoOverride) => {
+  setLoading(true);
+  setPageError('');
+  try {
+    const aniomes = buildAniomes(filtroAnio, filtroMes);
+    const idAfiliado = idAfiliadoOverride ?? (filtroAfiliado || null);
+    const res = await getCuentaCorriente({
+      page: p, limit: LIMIT,
+      ...(idAfiliado && { idAfiliado }),
+      ...(aniomes    && { aniomes }),
+      ...(filtroEstado && { estado: filtroEstado }),
+    });
+    setData(res.data.data || []);
+    setTotal(res.data.total || 0);
+  } catch {
+    setPageError('Error al cargar movimientos.');
+  } finally {
+    setLoading(false);
+  }
+};
 
 useEffect(() => {
   const idFromUrl = searchParams.get('idAfiliado');
-  if (idFromUrl) setFiltroAfiliado(idFromUrl);
-  load(1);
+  if (idFromUrl) {
+    setFiltroAfiliado(idFromUrl);
+    load(1, idFromUrl);
+  } else {
+    load(1);
+  }
   getRubros().then(r => setRubros(r.data.data || []));
+  getAfiliados(1, 200, '').then(r => setAfiliados(r.data.data || []));
 }, []);
 
   const handleFiltroAfiliado = (val) => {
@@ -223,6 +229,17 @@ useEffect(() => {
         <button className="btn-primary btn-inline" onClick={openCreate}>+ Nuevo cargo</button>
       </div>
 
+        <div className="form-group" style={{ margin: 0 }}>
+        <label>Afiliado</label>
+        <select value={filtroAfiliado} onChange={e => setFiltroAfiliado(e.target.value)}>
+            <option value="">Todos</option>
+            {afiliados.map(a => (
+            <option key={a.Id} value={a.Id}>
+                {a.PrimerNombre} {a.PrimerApellido} — {a.Documento}
+            </option>
+            ))}
+        </select>
+        </div>
       <div className="toolbar" style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', alignItems: 'flex-end' }}>
         <div className="form-group" style={{ margin: 0 }}>
           <label>Mes</label>
