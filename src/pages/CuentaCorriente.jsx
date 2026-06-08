@@ -53,17 +53,20 @@ function CuentaCorriente() {
     return parseInt(`${anio}${String(mes).padStart(2, '0')}`);
   };
 
-const load = async (p = 1, idAfiliadoOverride) => {
+const load = async (p = 1, idAfiliadoOverride, mesOverride, anioOverride, estadoOverride) => {
   setLoading(true);
   setPageError('');
   try {
-    const aniomes = buildAniomes(filtroAnio, filtroMes);
+    const mes   = mesOverride   ?? filtroMes;
+    const anio  = anioOverride  ?? filtroAnio;
+    const estado = estadoOverride ?? filtroEstado;
     const idAfiliado = idAfiliadoOverride ?? (filtroAfiliado || null);
+    const aniomes = buildAniomes(anio, mes);
     const res = await getCuentaCorriente({
       page: p, limit: LIMIT,
       ...(idAfiliado && { idAfiliado }),
       ...(aniomes    && { aniomes }),
-      ...(filtroEstado && { estado: filtroEstado }),
+      ...(estado     && { estado }),
     });
     setData(res.data.data || []);
     setTotal(res.data.total || 0);
@@ -261,9 +264,10 @@ useEffect(() => {
             <option value="">Todos</option>
             <option value="pendiente">Pendiente</option>
             <option value="pagado">Pagado</option>
+            <option value="vencido">Vencido</option>
           </select>
         </div>
-        <button className="btn-primary btn-inline" onClick={aplicarFiltros}>Filtrar</button>
+        <button className="btn-primary btn-inline" onClick={() => { setPage(1); load(1); }}>Filtrar</button>
       </div>
 
       {pageError && <p className="alert alert-error">{pageError}</p>}
@@ -301,7 +305,7 @@ useEffect(() => {
                 const meses = ['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Set','Oct','Nov','Dic'];
                 const mes = parseInt(s.substring(4, 6)) - 1;
                 const anio = s.substring(0, 4);
-                return `${meses[mes]}a ${anio}`;
+                return `${meses[mes]} ${anio}`;
                 })() : '—'}</td>
                 <td>{row.FechaVto ? row.FechaVto.substring(0, 10) : '—'}</td>
                 <td>{estadoBadge(row)}</td>
