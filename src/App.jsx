@@ -6,6 +6,7 @@ import Afiliados from './pages/Afiliados';
 import Autores from './pages/Autores';
 import Rubros from './pages/Rubros';
 import ProtectedRoute from './components/ProtectedRoute';
+import CuentaCorriente from './pages/CuentaCorriente';
 
 function App() {
   return (
@@ -24,6 +25,7 @@ function App() {
           <Route path="afiliados" element={<Afiliados />} />
           <Route path="autores" element={<Autores />} />
           <Route path="rubros" element={<Rubros />} />
+          <Route path="cuenta-corriente" element={<CuentaCorriente />} />
         </Route>
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
