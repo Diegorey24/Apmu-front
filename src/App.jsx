@@ -7,6 +7,7 @@ import Autores from './pages/Autores';
 import Rubros from './pages/Rubros';
 import ProtectedRoute from './components/ProtectedRoute';
 import CuentaCorriente from './pages/CuentaCorriente';
+import Editoriales from './pages/Editoriales';
 
 function App() {
   return (
@@ -26,6 +27,7 @@ function App() {
           <Route path="autores" element={<Autores />} />
           <Route path="rubros" element={<Rubros />} />
           <Route path="cuenta-corriente" element={<CuentaCorriente />} />
+          <Route path="editoriales" element={<Editoriales />} />  
         </Route>
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>

@@ -1,4 +1,5 @@
-function Modal({ title, onClose, children, size = 'md' }) {
+function Modal({ isOpen, title, onClose, children, size = 'md' }) {
+  if (!isOpen) return null;
   return (
     <div className="modal-backdrop" onClick={onClose}>
       <div className={`modal-box modal-${size}`} onClick={(e) => e.stopPropagation()}>
