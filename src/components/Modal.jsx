@@ -1,4 +1,4 @@
-function Modal({ isOpen, title, onClose, children, size = 'md' }) {
+function Modal({ isOpen = true, title, onClose, children, size = 'md' }) {
   if (!isOpen) return null;
   return (
     <div className="modal-backdrop" onClick={onClose}>
