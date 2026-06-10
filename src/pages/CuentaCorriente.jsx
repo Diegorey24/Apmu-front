@@ -131,9 +131,18 @@ useEffect(() => {
   const closeModal = () => setModal(null);
 
   const handleChange = (e) => {
-    const { name, value } = e.target;
+  const { name, value } = e.target;
+  if (name === 'Rubro') {
+    const rubroSeleccionado = rubros.find(r => r.RubCod === parseInt(value));
+    setForm(f => ({
+      ...f,
+      Rubro: value,
+      Importe: rubroSeleccionado ? rubroSeleccionado.Importe : f.Importe,
+    }));
+  } else {
     setForm(f => ({ ...f, [name]: value }));
-  };
+  }
+};
 
   const handleChangeCobro = (e) => {
     const { name, value } = e.target;
