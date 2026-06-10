@@ -241,18 +241,22 @@ h1, h2 { color: var(--text-h); font-weight: 600; }
   margin-bottom: 16px;
 }
 
-.search-input {
+.search-input,
+.toolbar select {
   padding: 9px 12px;
   border: 1px solid var(--border);
   border-radius: 8px;
   background: var(--card-bg);
   color: var(--text-h);
   font-size: 14px;
-  width: 300px;
+  font-family: var(--sans);
   outline: none;
   transition: border-color 0.2s;
 }
-.search-input:focus { border-color: var(--accent); }
+.search-input { width: 300px; }
+.search-input:focus,
+.toolbar select:focus { border-color: var(--accent); }
+.toolbar select:disabled { opacity: 0.55; cursor: not-allowed; background: var(--border); }
 
 /* ── Tabla ── */
 .table-wrapper {
