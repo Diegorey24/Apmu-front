@@ -112,6 +112,8 @@ h1, h2 { color: var(--text-h); font-weight: 600; }
 }
 .btn-sm:hover { background: var(--accent-bg); border-color: var(--accent); color: var(--accent); }
 .btn-sm.danger:hover { background: rgba(220,38,38,0.08); border-color: var(--error); color: var(--error); }
+.btn-sm.primary { background: var(--accent); border-color: var(--accent); color: #fff; }
+.btn-sm.primary:hover { background: var(--accent-hover); border-color: var(--accent-hover); color: #fff; }
 .btn-sm.btn-cancel { padding: 9px 20px; }
 
 /* ── Login ── */

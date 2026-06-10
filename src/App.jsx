@@ -10,6 +10,7 @@ import CuentaCorriente from './pages/CuentaCorriente';
 import Editoriales from './pages/Editoriales';
 import Materias from './pages/Materias';
 import Libros from './pages/Libros';
+import Prestamos from './pages/Prestamos';
 
 function App() {
   return (
@@ -32,6 +33,7 @@ function App() {
           <Route path="editoriales" element={<Editoriales />} /> 
           <Route path="materias" element={<Materias />} /> 
           <Route path="libros" element={<Libros />} />
+          <Route path="prestamos" element={<Prestamos />} />
         </Route>
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
