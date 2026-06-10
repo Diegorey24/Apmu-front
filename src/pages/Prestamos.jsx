@@ -3,6 +3,7 @@ import { getPrestamos, getPrestamoById, createPrestamo, devolverLibro } from '..
 import { searchAfiliados } from '../api/afiliados';
 import { getLibros } from '../api/libros';
 import Modal from '../components/Modal';
+import { useSearchParams } from 'react-router-dom';
 
 export default function Prestamos() {
   const [prestamos, setPrestamos] = useState([]);
@@ -41,9 +42,17 @@ export default function Prestamos() {
     }
   };
 
-  useEffect(() => {
-    cargar({ estado: filtroEstado });
-  }, []);
+const [searchParams] = useSearchParams();
+
+useEffect(() => {
+  const estadoUrl = searchParams.get('estado');
+  if (estadoUrl) {
+    setFiltroEstado(estadoUrl);
+    cargar({ estado: estadoUrl });
+  } else {
+    cargar({ estado: 'Activo' });
+  }
+}, []);
 
   const aplicarFiltros = () => {
     cargar({
