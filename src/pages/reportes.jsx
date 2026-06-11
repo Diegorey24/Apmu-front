@@ -178,7 +178,7 @@ export default function Reportes() {
                   </p>
                 </div>
                 <div style={{ background: 'var(--color-background-secondary)', borderRadius: 12, padding: 24 }}>
-                  <p style={{ margin: 0, fontSize: 13, color: 'var(--color-text-secondary)' }}>Total general</p>
+                  <p style={{ margin: 0, fontSize: 13, color: 'var(--color-text-secondary)' }}>Total aportes</p>
                   <p style={{ margin: '8px 0 0', fontSize: 28, fontWeight: 500 }}>
                     $ {Number(reporte.totales.TotalGeneral).toLocaleString('es-UY', { minimumFractionDigits: 2 })}
                   </p>
