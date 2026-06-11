@@ -54,6 +54,10 @@ function Rubros() {
   const handleSave = async (e) => {
     e.preventDefault();
     setFormError('');
+    if (form.Importe === '' || parseFloat(form.Importe) <= 0) {
+      setFormError('El importe es obligatorio y debe ser mayor a 0.');
+      return;
+    }
     setSaving(true);
     try {
       const payload = {
@@ -144,11 +148,12 @@ function Rubros() {
               </div>
 
               <div className="form-group">
-                <label htmlFor="Importe">Importe</label>
+                <label htmlFor="Importe">Importe *</label>
                 <input
                   id="Importe" name="Importe" type="number"
                   step="0.01" min="0"
                   value={form.Importe} onChange={handleChange}
+                  required
                 />
               </div>
 

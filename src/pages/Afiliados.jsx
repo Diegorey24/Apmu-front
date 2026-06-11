@@ -119,6 +119,14 @@ const openEdit = (record) => {
   const handleSave = async (e) => {
     e.preventDefault();
     setFormError('');
+    if (!form.FechaNacimiento) {
+      setFormError('La fecha de nacimiento es obligatoria.');
+      return;
+    }
+    if (!form.Sexo) {
+      setFormError('El sexo es obligatorio.');
+      return;
+    }
     if (form.Documento && !validate_ci(form.Documento)) {
       setFormError('La cédula ingresada no es válida.');
       return;
@@ -298,8 +306,8 @@ const handleSaveCargo = async (e) => {
                 <input id="Documento" name="Documento" value={form.Documento} onChange={handleChange} required />
               </div>
               <div className="form-group">
-                <label htmlFor="Sexo">Sexo</label>
-                <select id="Sexo" name="Sexo" value={form.Sexo} onChange={handleChange}>
+                <label htmlFor="Sexo">Sexo *</label>
+                <select id="Sexo" name="Sexo" value={form.Sexo} onChange={handleChange} required>
                   <option value="">—</option>
                   <option value="M">Masculino</option>
                   <option value="F">Femenino</option>
@@ -327,8 +335,8 @@ const handleSaveCargo = async (e) => {
               </div>
 
               <div className="form-group">
-                <label htmlFor="FechaNacimiento">Fecha de nacimiento</label>
-                <input type="date" id="FechaNacimiento" name="FechaNacimiento" value={form.FechaNacimiento} onChange={handleChange} />
+                <label htmlFor="FechaNacimiento">Fecha de nacimiento *</label>
+                <input type="date" id="FechaNacimiento" name="FechaNacimiento" value={form.FechaNacimiento} onChange={handleChange} required />
               </div>
               <div className="form-group">
                 <label htmlFor="EstadoCivil">Estado civil</label>

@@ -152,8 +152,8 @@ useEffect(() => {
   const handleSave = async (e) => {
     e.preventDefault();
     setFormError('');
-    if (parseFloat(form.Importe) <= 0) {
-    setFormError('El importe debe ser mayor a 0.');
+    if (form.Importe === '' || parseFloat(form.Importe) <= 0) {
+    setFormError('El importe es obligatorio y debe ser mayor a 0.');
     setSaving(false);
     return;
     }
@@ -380,9 +380,9 @@ useEffect(() => {
               </div>
 
               <div className="form-group">
-                <label htmlFor="Importe">Importe</label>
+                <label htmlFor="Importe">Importe *</label>
                 <input id="Importe" name="Importe" type="number" step="0.01" min="0"
-                  value={form.Importe} onChange={handleChange} />
+                  value={form.Importe} onChange={handleChange} required />
               </div>
 
               <div className="form-group">

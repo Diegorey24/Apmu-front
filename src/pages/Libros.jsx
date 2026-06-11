@@ -82,6 +82,7 @@ export default function Libros() {
   const guardar = async () => {
     if (!form.nombre.trim()) { setError('El nombre es obligatorio'); return; }
     if (!form.tipo) { setError('El tipo es obligatorio'); return; }
+    if (!form.idEditorial) { setError('La editorial es obligatoria'); return; }
     try {
       if (editando) {
         await updateLibro(editando.Id, form);
@@ -210,10 +211,10 @@ export default function Libros() {
             onChange={e => setField('edicion', e.target.value)} />
         </div>
         <div className="form-group">
-          <label>Editorial</label>
+          <label>Editorial *</label>
           <select className="form-control" value={form.idEditorial}
-            onChange={e => setField('idEditorial', e.target.value)}>
-            <option value="">Sin editorial</option>
+            onChange={e => setField('idEditorial', e.target.value)} required>
+            <option value="">— Seleccioná —</option>
             {editoriales.map(e => <option key={e.Id} value={e.Id}>{e.Nombre}</option>)}
           </select>
         </div>
