@@ -23,7 +23,7 @@ function Sidebar({ isOpen, onClose }) {
         <NavLink to="/dashboard/afiliados" onClick={handleNav}>Afiliados</NavLink>
         <NavLink to="/dashboard/rubros" onClick={handleNav}>Rubros</NavLink>
         <NavLink to="/dashboard/autores" onClick={handleNav}>Autores</NavLink>
-        <NavLink to="/dashboard/cuenta-corriente" onClick={handleNav}>Cuenta corriente</NavLink>
+        <NavLink to="/dashboard/cuenta-corriente" onClick={handleNav}>Aportes</NavLink>
         <NavLink to="/dashboard/editoriales">Editoriales</NavLink>
         <NavLink to="/dashboard/materias">Materias</NavLink>
         <NavLink to="/dashboard/libros">Libros</NavLink>

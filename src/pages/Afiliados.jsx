@@ -264,7 +264,7 @@ const handleSaveCargo = async (e) => {
                     <button className="btn-sm" onClick={() => openEdit(a)}>Editar</button>
                     <button className="btn-sm danger" onClick={() => handleBaja(a.Id)}>Dar de baja</button>
                     <button className="btn-sm" onClick={() => navigate(`/dashboard/cuenta-corriente?idAfiliado=${a.Id}`)}>
-                      Cuenta corriente
+                      Aportes
                     </button>
                   </div>
                 </td>
@@ -419,7 +419,7 @@ const handleSaveCargo = async (e) => {
                 <label htmlFor="Observacion">Observación</label>
                 <textarea id="Observacion" name="Observacion" value={form.Observacion} onChange={handleChange} rows={3} />
               </div>
-              <p className="section-title">Cuenta corriente</p>
+              <p className="section-title">Aportes</p>
 
             <div className="form-group full">
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>

@@ -237,7 +237,7 @@ useEffect(() => {
   return (
     <div className="page">
       <div className="page-header">
-        <h2 className="page-title">Cuenta corriente</h2>
+        <h2 className="page-title">Aportes</h2>
         <button className="btn-primary btn-inline" onClick={openCreate}>+ Nuevo cargo</button>
       </div>
 
