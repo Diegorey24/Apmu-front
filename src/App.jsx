@@ -1,4 +1,4 @@
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, Navigate, HashRouter } from 'react-router-dom';
 import Login from './pages/Login';
 import DashboardLayout from './pages/DashboardLayout';
 import DashboardHome from './pages/DashboardHome';
@@ -12,10 +12,11 @@ import Materias from './pages/Materias';
 import Libros from './pages/Libros';
 import Prestamos from './pages/Prestamos';
 import Reportes from './pages/Reportes';
+import Creditos from './pages/Creditos';
 
 function App() {
   return (
-    <BrowserRouter>
+    <HashRouter>
       <Routes>
         <Route path="/" element={<Login />} />
         <Route
@@ -36,10 +37,11 @@ function App() {
           <Route path="libros" element={<Libros />} />
           <Route path="prestamos" element={<Prestamos />} />
           <Route path="reportes" element={<Reportes />} />
+          <Route path="creditos" element={<Creditos />} />
         </Route>
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
-    </BrowserRouter>
+    </HashRouter>
   );
 }
 
