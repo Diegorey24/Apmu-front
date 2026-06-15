@@ -30,6 +30,7 @@ function Sidebar({ isOpen, onClose }) {
         <NavLink to="/dashboard/prestamos">Préstamos</NavLink>
         <NavLink to="/dashboard/reportes">Reportes</NavLink>
         <NavLink to="/dashboard/creditos">Créditos históricos</NavLink>
+        <NavLink to="/dashboard/cajachica">Caja chica</NavLink>
         
       </nav>
       <button className="sidebar-logout" onClick={logout}>Cerrar sesión</button>
