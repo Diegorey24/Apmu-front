@@ -6,7 +6,7 @@ import Modal from '../components/Modal';
 
 const FORM_VACIO = {
   isbn: '', nombre: '', edicion: '', idEditorial: '', idMateria: '',
-  tipo: 'Literatura', material: '', stock: 0,
+  tipo: 'Literatura', material: '', stock: 0, costo: '',
 };
 
 export default function Libros() {
@@ -74,6 +74,7 @@ export default function Libros() {
       tipo: libro.Tipo || 'Literatura',
       material: libro.Material || '',
       stock: libro.Stock ?? 0,
+      costo: libro.Costo ?? '',
     });
     setError('');
     setModalOpen(true);
@@ -152,33 +153,35 @@ export default function Libros() {
               <th>Editorial</th>
               <th>Materia</th>
               <th>Stock</th>
+              <th>Costo</th>
               <th>Estado</th>
               <th>Acciones</th>
             </tr>
           </thead>
           <tbody>
             {libros.length === 0 ? (
-              <tr><td colSpan={8}>No hay libros</td></tr>
+              <tr><td colSpan={9}>No hay libros</td></tr>
             ) : (
               libros.map(l => (
-                <tr key={l.Id} style={{ opacity: l.FechaBaja ? 0.5 : 1 }}>
-                  <td>{l.Nombre}</td>
-                  <td>{l.ISBN || '-'}</td>
-                  <td>{l.Tipo}</td>
-                  <td>{l.NombreEditorial || '-'}</td>
-                  <td>{l.NombreMateria || '-'}</td>
-                  <td>{l.Stock}</td>
-                  <td>{l.FechaBaja ? 'Baja' : 'Activo'}</td>
-                  <td>
-                    <button className="btn-sm" onClick={() => abrirEditar(l)}>Editar</button>
-                    <button
-                      className={`btn-sm ${l.FechaBaja ? '' : 'danger'}`}
-                      onClick={() => toggleBaja(l)}
-                    >
-                      {l.FechaBaja ? 'Reactivar' : 'Dar de baja'}
-                    </button>
-                  </td>
-                </tr>
+              <tr key={l.Id} style={{ opacity: l.FechaBaja ? 0.5 : 1 }}>
+                <td>{l.Nombre}</td>
+                <td>{l.ISBN || '-'}</td>
+                <td>{l.Tipo}</td>
+                <td>{l.NombreEditorial || '-'}</td>
+                <td>{l.NombreMateria || '-'}</td>
+                <td>{l.Stock}</td>
+                <td>{l.Tipo === 'Estudio' && l.Costo ? `$ ${Number(l.Costo).toFixed(2)}` : '—'}</td>
+                <td>{l.FechaBaja ? 'Baja' : 'Activo'}</td>
+                <td>
+                  <button className="btn-sm" onClick={() => abrirEditar(l)}>Editar</button>
+                  <button
+                    className={`btn-sm ${l.FechaBaja ? '' : 'danger'}`}
+                    onClick={() => toggleBaja(l)}
+                  >
+                    {l.FechaBaja ? 'Reactivar' : 'Dar de baja'}
+                  </button>
+                </td>
+              </tr>
               ))
             )}
           </tbody>
@@ -236,6 +239,14 @@ export default function Libros() {
           <label>Stock inicial</label>
           <input className="form-control" type="number" min="0" value={form.stock}
             onChange={e => setField('stock', parseInt(e.target.value) || 0)} />
+        </div>
+        <div className="form-group">
+          <label>Costo</label>
+          <input className="form-control" type="number" min="0" step="0.01"
+            value={form.costo}
+            onChange={e => setField('costo', e.target.value)}
+            disabled={form.tipo !== 'Estudio'}
+            placeholder={form.tipo !== 'Estudio' ? 'Solo para libros de Estudio' : ''} />
         </div>
         {error && <span className="error">{error}</span>}
         <div className="modal-actions">
