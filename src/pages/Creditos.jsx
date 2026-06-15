@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { getCreditos, getCreditoById } from '../api/creditos';
 import Modal from '../components/Modal';
 
-const ESTADOS = ['Cancelado', 'Vigente', 'Vencido', 'Castigado'];
+const ESTADOS = ['Anulado', 'Cancelado', 'Castigado'];
 
 export default function Creditos() {
   const [creditos, setCreditos] = useState([]);
@@ -59,8 +59,7 @@ export default function Creditos() {
   const estadoBadge = (estado) => {
     const colores = {
       Cancelado: '#16a34a',
-      Vigente: '#2563eb',
-      Vencido: '#dc2626',
+      Anulado: '#dc2626',
       Castigado: '#6b7280'
     };
     return (
@@ -134,9 +133,9 @@ export default function Creditos() {
                   <td>{c.NombreSocio || c.Cliente_Id}</td>
                   <td>{c.TipoSolicitud}</td>
                   <td>{c.Finalidad}</td>
-                  <td>{formatMonto(c.CapitalInicial)}</td>
-                  <td>{c.CuotasPagas}/{c.CantidadCuotas}</td>
-                  <td>{formatMonto(c.SaldoCapital)}</td>
+                  <td style={{ whiteSpace: 'nowrap' }}>{formatMonto(c.CapitalInicial)}</td>
+                  <td><strong>{c.CuotasPagas}</strong>/{c.CantidadCuotas}</td>
+                  <td style={{ whiteSpace: 'nowrap' }}>{formatMonto(c.SaldoCapital)}</td>
                   <td>{estadoBadge(c.Estado)}</td>
                   <td>{formatFecha(c.FechaOtorgado)}</td>
                   <td>
@@ -149,7 +148,7 @@ export default function Creditos() {
 
           {totalPages > 1 && (
             <div className="pagination">
-              <span className="pagination-info">{total} créditos — Página {page} de {totalPages}</span>
+              <span classNamec="pagination-info">{total} créditos — Página {page} de {totalPages}</span>
               <button className="page-btn" onClick={() => { setPage(p => p - 1); cargar(page - 1, { estado: filtroEstado, clienteId: filtroCliente, busqueda: filtroBusqueda }); }} disabled={page === 1}>← Anterior</button>
               <button className="page-btn" onClick={() => { setPage(p => p + 1); cargar(page + 1, { estado: filtroEstado, clienteId: filtroCliente, busqueda: filtroBusqueda }); }} disabled={page === totalPages}>Siguiente →</button>
             </div>
