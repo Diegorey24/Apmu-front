@@ -59,6 +59,27 @@ function CajaChica() {
   const handleSave = async (e) => {
     e.preventDefault();
     setFormError('');
+    if (!form.fecha) {
+      setFormError('La fecha es obligatoria.');
+      return;
+    }
+    const hoy = new Date().toISOString().substring(0, 10);
+    if (form.fecha > hoy) {
+      setFormError('La fecha no puede ser una fecha futura.');
+      return;
+    }
+    if (form.tipo !== 'Entrada' && form.tipo !== 'Salida') {
+      setFormError('El tipo debe ser Entrada o Salida.');
+      return;
+    }
+    if (!form.descripcion.trim()) {
+      setFormError('La descripción es obligatoria.');
+      return;
+    }
+    if (form.descripcion.length > 200) {
+      setFormError('La descripción no puede superar los 200 caracteres.');
+      return;
+    }
     if (parseFloat(form.importe) <= 0) {
       setFormError('El importe debe ser mayor a 0.');
       return;
