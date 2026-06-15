@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { getCajaChica, createMovimiento, updateMovimiento, deleteMovimiento } from '../api/cajachica';
 import Modal from '../components/Modal';
+import { formatFecha } from '../utils/fecha';
 
 const EMPTY = { fecha: '', tipo: 'Entrada', descripcion: '', importe: '', usuario: '' };
 
@@ -118,12 +119,6 @@ function CajaChica() {
   };
 
   const formatMonto = (m) => `$ ${Number(m).toLocaleString('es-UY', { minimumFractionDigits: 2 })}`;
-
-  const formatFecha = (f) => {
-    if (!f) return '—';
-    const [y, m, d] = f.substring(0, 10).split('-');
-    return `${d}-${m}-${y}`;
-  };
 
   return (
     <div className="page">

@@ -3,6 +3,7 @@ import { searchAfiliados } from '../api/afiliados';
 import { getRubros } from '../api/rubros';
 import { getDeudaAfiliado, getConciliacion } from '../api/reportes';
 import { useEffect } from 'react';
+import { formatFecha } from '../utils/fecha';
 
 const meses = ['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Set','Oct','Nov','Dic'];
 const mesesCompletos = [
@@ -206,7 +207,7 @@ export default function Reportes() {
                         <tr key={i}>
                           <td>{m.Rubro?.trim() || '—'}</td>
                           <td>$ {Number(m.Importe).toLocaleString('es-UY', { minimumFractionDigits: 2 })}</td>
-                          <td>{m.FechaVto ? m.FechaVto.substring(0, 10) : '—'}</td>
+                          <td>{formatFecha(m.FechaVto)}</td>
                           <td style={{ color: estadoColor(m.Estado), fontWeight: 500 }}>{m.Estado}</td>
                           <td>{m.NroRecibo || '—'}</td>
                           <td>{m.FormaPago || '—'}</td>

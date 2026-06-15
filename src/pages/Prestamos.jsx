@@ -4,6 +4,7 @@ import { searchAfiliados } from '../api/afiliados';
 import { getLibros } from '../api/libros';
 import Modal from '../components/Modal';
 import { useSearchParams } from 'react-router-dom';
+import { formatFecha } from '../utils/fecha';
 
 export default function Prestamos() {
   const [prestamos, setPrestamos] = useState([]);
@@ -219,7 +220,7 @@ useEffect(() => {
                 <td>{p.Id}</td>
                 <td>{p.NombreAfiliado}</td>
                 <td>{p.Documento}</td>
-                <td>{new Date(p.FechaPrestamo).toLocaleDateString('es-UY')}</td>
+                <td>{formatFecha(p.FechaPrestamo)}</td>
                 <td>{p.CantLibros}</td>
                 <td>{p.CantDevueltos}</td>
                 <td>{estadoBadge(p.Estado)}</td>
@@ -240,7 +241,7 @@ useEffect(() => {
         {detalle && (
           <>
             <p style={{ marginBottom: 12, color: 'var(--color-text-secondary)' }}>
-              Fecha: {new Date(detalle.FechaPrestamo).toLocaleDateString('es-UY')} &nbsp;|&nbsp; Estado: {estadoBadge(detalle.Estado)}
+              Fecha: {formatFecha(detalle.FechaPrestamo)} &nbsp;|&nbsp; Estado: {estadoBadge(detalle.Estado)}
             </p>
             <table className="tabla">
               <thead>
@@ -255,8 +256,8 @@ useEffect(() => {
                 {detalle.lineas.map(l => (
                   <tr key={l.Id} style={{ opacity: l.FechaDevolucion ? 0.5 : 1 }}>
                     <td>{l.NombreLibro}</td>
-                    <td>{l.FechaVencimiento ? new Date(l.FechaVencimiento).toLocaleDateString('es-UY') : '-'}</td>
-                    <td>{l.FechaDevolucion ? new Date(l.FechaDevolucion).toLocaleDateString('es-UY') : 'Pendiente'}</td>
+                    <td>{l.FechaVencimiento ? formatFecha(l.FechaVencimiento) : '-'}</td>
+                    <td>{l.FechaDevolucion ? formatFecha(l.FechaDevolucion) : 'Pendiente'}</td>
                     <td>
                       {!l.FechaDevolucion && (
                         <button className="btn-sm primary" onClick={() => handleDevolver(l.Id)}>

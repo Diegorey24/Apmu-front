@@ -4,6 +4,7 @@ import { getAfiliados } from '../api/afiliados';
 import { getRubros } from '../api/rubros';
 import Modal from '../components/Modal';
 import { useSearchParams } from 'react-router-dom';
+import { formatFecha } from '../utils/fecha';
 
 const LIMIT = 20;
 
@@ -318,7 +319,7 @@ useEffect(() => {
                 const anio = s.substring(0, 4);
                 return `${meses[mes]} ${anio}`;
                 })() : '—'}</td>
-                <td>{row.FechaVto ? row.FechaVto.substring(0, 10) : '—'}</td>
+                <td>{formatFecha(row.FechaVto)}</td>
                 <td>{estadoBadge(row)}</td>
                 <td>
                   <div className="td-actions">

@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { getCreditos, getCreditoById } from '../api/creditos';
 import Modal from '../components/Modal';
+import { formatFecha } from '../utils/fecha';
 
 const ESTADOS = ['Anulado', 'Cancelado', 'Castigado'];
 
@@ -73,7 +74,6 @@ export default function Creditos() {
     );
   };
 
-  const formatFecha = (f) => f ? new Date(f).toLocaleDateString('es-UY') : '—';
   const formatMonto = (m) => m != null ? `$ ${Number(m).toLocaleString('es-UY', { minimumFractionDigits: 2 })}` : '—';
 
   return (

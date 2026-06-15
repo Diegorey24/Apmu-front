@@ -5,6 +5,7 @@ import { getCuentaCorriente } from '../api/cuentacorriente';
 import { getAfiliados } from '../api/afiliados';
 import { getLibros } from '../api/libros';
 import Modal from '../components/Modal';
+import { formatFecha } from '../utils/fecha';
 
 function DashboardHome() {
   const [stats, setStats]     = useState(null);
@@ -178,7 +179,7 @@ function DashboardHome() {
                     <td>{row.RubDsc?.trim() || row.Rubro}</td>
                     <td>{row.Importe != null ? `$ ${Number(row.Importe).toFixed(2)}` : '—'}</td>
                     <td>{formatPeriodo(row.Aniomes)}</td>
-                    <td>{row.FechaVto ? row.FechaVto.substring(0, 10) : '—'}</td>
+                    <td>{formatFecha(row.FechaVto)}</td>
                   </tr>
                 ))}
               </tbody>
@@ -220,7 +221,7 @@ function DashboardHome() {
                   <tr key={row.Id}>
                     <td>{row.PrimerNombre} {row.PrimerApellido}</td>
                     <td>{row.Documento}</td>
-                    <td>{row.FechaBaja ? row.FechaBaja.substring(0, 10) : '—'}</td>
+                    <td>{formatFecha(row.FechaBaja)}</td>
                   </tr>
                 ))}
               </tbody>
