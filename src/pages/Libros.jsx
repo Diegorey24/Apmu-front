@@ -47,6 +47,17 @@ export default function Libros() {
     });
   };
 
+  const cambiarTipo = (tipo) => {
+    setFiltroTipo(tipo);
+    const idMateria = tipo === 'Estudio' ? filtroMateria : '';
+    setFiltroMateria(idMateria);
+    cargar({
+      tipo: tipo || undefined,
+      idMateria: idMateria || undefined,
+      busqueda: filtroBusqueda || undefined,
+    });
+  };
+
   const limpiarFiltros = () => {
     setFiltroTipo('');
     setFiltroMateria('');
@@ -119,6 +130,12 @@ export default function Libros() {
         <button className="btn-primary btn-inline" onClick={abrirCrear}>+ Nuevo libro</button>
       </div>
 
+      <div className="tabs">
+        <button className={filtroTipo === '' ? 'active' : ''} onClick={() => cambiarTipo('')}>Todos</button>
+        <button className={filtroTipo === 'Literatura' ? 'active' : ''} onClick={() => cambiarTipo('Literatura')}>Literatura</button>
+        <button className={filtroTipo === 'Estudio' ? 'active' : ''} onClick={() => cambiarTipo('Estudio')}>Estudio</button>
+      </div>
+
       <div className="toolbar">
         <input
           className="search-input"
@@ -127,16 +144,12 @@ export default function Libros() {
           onChange={e => setFiltroBusqueda(e.target.value)}
           onKeyDown={e => e.key === 'Enter' && aplicarFiltros()}
         />
-        <select value={filtroTipo} onChange={e => setFiltroTipo(e.target.value)}>
-          <option value="">Todos los tipos</option>
-          <option value="Literatura">Literatura</option>
-          <option value="Estudio">Estudio</option>
-        </select>
-        <select value={filtroMateria} onChange={e => setFiltroMateria(e.target.value)}
-          disabled={filtroTipo !== 'Estudio'}>
-          <option value="">Todas las materias</option>
-          {materias.map(m => <option key={m.Id} value={m.Id}>{m.Nombre}</option>)}
-        </select>
+        {filtroTipo === 'Estudio' && (
+          <select value={filtroMateria} onChange={e => setFiltroMateria(e.target.value)}>
+            <option value="">Todas las materias</option>
+            {materias.map(m => <option key={m.Id} value={m.Id}>{m.Nombre}</option>)}
+          </select>
+        )}
         <button className="btn-primary btn-inline" onClick={aplicarFiltros}>Buscar</button>
         <button className="btn-sm" onClick={limpiarFiltros}>Limpiar</button>
       </div>

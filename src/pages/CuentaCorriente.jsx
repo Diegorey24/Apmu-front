@@ -79,11 +79,13 @@ const load = async (p = 1, idAfiliadoOverride, mesOverride, anioOverride, estado
 
 useEffect(() => {
   const idFromUrl = searchParams.get('idAfiliado');
+  const estadoFromUrl = searchParams.get('estado');
+  if (estadoFromUrl) setFiltroEstado(estadoFromUrl);
   if (idFromUrl) {
     setFiltroAfiliado(idFromUrl);
-    load(1, idFromUrl);
+    load(1, idFromUrl, undefined, undefined, estadoFromUrl || undefined);
   } else {
-    load(1);
+    load(1, undefined, undefined, undefined, estadoFromUrl || undefined);
   }
   getRubros().then(r => setRubros(r.data.data || []));
   getAfiliados(1, 200, '').then(r => setAfiliados(r.data.data || []));
