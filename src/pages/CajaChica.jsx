@@ -119,6 +119,12 @@ function CajaChica() {
 
   const formatMonto = (m) => `$ ${Number(m).toLocaleString('es-UY', { minimumFractionDigits: 2 })}`;
 
+  const formatFecha = (f) => {
+    if (!f) return '—';
+    const [y, m, d] = f.substring(0, 10).split('-');
+    return `${d}-${m}-${y}`;
+  };
+
   return (
     <div className="page">
       <div className="page-header">
@@ -165,7 +171,7 @@ function CajaChica() {
               <tr><td colSpan={7} className="td-empty">Sin movimientos.</td></tr>
             ) : data.map(row => (
               <tr key={row.Id}>
-                <td>{row.Fecha?.substring(0, 10)}</td>
+                <td>{formatFecha(row.Fecha)}</td>
                 <td>{row.Tipo}</td>
                 <td>{row.Descripcion}</td>
                 <td>{row.Tipo === 'Entrada' ? '+ ' : '- '}{formatMonto(row.Importe)}</td>
