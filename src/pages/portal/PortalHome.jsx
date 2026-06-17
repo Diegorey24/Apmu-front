@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { getMisDatos } from '../../api/portalSocio';
+import { getMisDatos, cambiarPassword } from '../../api/portalSocio';
 
 const meses = ['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Set','Oct','Nov','Dic'];
 
@@ -39,6 +39,12 @@ export default function PortalHome() {
   const [tab, setTab] = useState('prestamos');
   const navigate = useNavigate();
 
+  const [passActual, setPassActual] = useState('');
+  const [passNueva, setPassNueva] = useState('');
+  const [passConfirmar, setPassConfirmar] = useState('');
+  const [passMsg, setPassMsg] = useState(null); // { tipo: 'ok'|'error', texto }
+  const [passLoading, setPassLoading] = useState(false);
+
   const nombre = localStorage.getItem('portal_nombre') || '';
 
   useEffect(() => {
@@ -47,6 +53,27 @@ export default function PortalHome() {
       .catch(() => setError('Error al cargar tus datos'))
       .finally(() => setLoading(false));
   }, []);
+
+  const handleCambiarPassword = async (e) => {
+    e.preventDefault();
+    setPassMsg(null);
+    if (passNueva !== passConfirmar) {
+      setPassMsg({ tipo: 'error', texto: 'Las contraseñas nuevas no coinciden' });
+      return;
+    }
+    setPassLoading(true);
+    try {
+      await cambiarPassword({ passwordActual: passActual, passwordNueva: passNueva });
+      setPassMsg({ tipo: 'ok', texto: 'Contraseña actualizada correctamente' });
+      setPassActual('');
+      setPassNueva('');
+      setPassConfirmar('');
+    } catch (err) {
+      setPassMsg({ tipo: 'error', texto: err.response?.data?.message || 'Error al cambiar la contraseña' });
+    } finally {
+      setPassLoading(false);
+    }
+  };
 
   const cerrarSesion = () => {
     localStorage.removeItem('portal_token');
@@ -202,7 +229,7 @@ export default function PortalHome() {
         }}>
           {/* Tabs */}
           <div style={{ borderBottom: '1px solid var(--border)', padding: '0 20px', display: 'flex' }}>
-            {[{ id: 'prestamos', l: 'Mis préstamos' }, { id: 'aportes', l: 'Mis aportes' }].map(t => (
+            {[{ id: 'prestamos', l: 'Mis préstamos' }, { id: 'aportes', l: 'Mis aportes' }, { id: 'password', l: 'Cambiar contraseña' }].map(t => (
               <button key={t.id} onClick={() => setTab(t.id)} style={{
                 padding: '13px 16px',
                 border: 'none', background: 'none',
@@ -221,34 +248,53 @@ export default function PortalHome() {
           </div>
 
           {/* Préstamos */}
-          {tab === 'prestamos' && (
-            datos?.prestamos?.length === 0 ? (
-              <div style={{ padding: '52px 24px', textAlign: 'center', color: 'var(--text)', fontSize: 14 }}>
-                No tenés préstamos registrados
-              </div>
-            ) : (
-              <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 14 }}>
+        {tab === 'prestamos' && (
+        <>
+            {datos?.prestamos?.length === 0 ? (
+            <p style={{ color: 'var(--color-text-secondary)' }}>No tenés préstamos registrados.</p>
+            ) : datos?.prestamos?.map(p => (
+            <div key={p.Id} style={{
+                background: 'var(--color-background-secondary)',
+                borderRadius: 12, padding: 20, marginBottom: 16
+            }}>
+                {/* Cabezal del préstamo */}
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
+                <div>
+                    <span style={{ fontWeight: 600 }}>Préstamo #{p.Id}</span>
+                    <span style={{ marginLeft: 12, color: 'var(--color-text-secondary)', fontSize: 13 }}>
+                    {new Date(p.FechaPrestamo).toLocaleDateString('es-UY')}
+                    </span>
+                </div>
+                {estadoBadge(p.Estado)}
+                </div>
+
+                {/* Líneas */}
+                <table className="tabla" style={{ marginBottom: 0 }}>
                 <thead>
-                  <tr style={{ background: 'var(--bg)' }}>
-                    {['#', 'Fecha', 'Libros', 'Devueltos', 'Estado'].map(h => (
-                      <th key={h} style={{ padding: '10px 20px', textAlign: 'left', fontSize: 11, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.5px', color: 'var(--text)', borderBottom: '1px solid var(--border)', whiteSpace: 'nowrap' }}>{h}</th>
-                    ))}
-                  </tr>
+                    <tr>
+                    <th>Libro</th>
+                    <th>Tipo</th>
+                    <th>Costo</th>
+                    <th>Vencimiento</th>
+                    <th>Devolución</th>
+                    </tr>
                 </thead>
                 <tbody>
-                  {datos?.prestamos?.map(p => (
-                    <tr key={p.Id} style={{ borderBottom: '1px solid var(--border)' }}>
-                      <td style={{ padding: '11px 20px', color: 'var(--text)', fontFamily: 'ui-monospace,Consolas,monospace', fontSize: 13 }}>{p.Id}</td>
-                      <td style={{ padding: '11px 20px', color: 'var(--text-h)' }}>{formatFecha(p.FechaPrestamo)}</td>
-                      <td style={{ padding: '11px 20px', color: 'var(--text-h)' }}>{p.CantLibros}</td>
-                      <td style={{ padding: '11px 20px', color: 'var(--text-h)' }}>{p.CantDevueltos}</td>
-                      <td style={{ padding: '11px 20px' }}>{estadoBadge(p.Estado)}</td>
+                    {p.lineas.map(l => (
+                    <tr key={l.Id} style={{ opacity: l.FechaDevolucion ? 0.6 : 1 }}>
+                        <td>{l.NombreLibro}</td>
+                        <td>{l.Tipo}</td>
+                        <td>{l.Tipo === 'Estudio' && l.Costo ? `$ ${Number(l.Costo).toFixed(2)}` : '—'}</td>
+                        <td>{l.FechaVencimiento ? new Date(l.FechaVencimiento).toLocaleDateString('es-UY') : '—'}</td>
+                        <td>{l.FechaDevolucion ? new Date(l.FechaDevolucion).toLocaleDateString('es-UY') : 'Pendiente'}</td>
                     </tr>
-                  ))}
+                    ))}
                 </tbody>
-              </table>
-            )
-          )}
+                </table>
+            </div>
+            ))}
+        </>
+        )}
 
           {/* Aportes */}
           {tab === 'aportes' && (
@@ -282,6 +328,66 @@ export default function PortalHome() {
               </table>
             )
           )}
+          {/* Cambiar contraseña */}
+          {tab === 'password' && (
+            <div style={{ padding: '32px 28px', maxWidth: 400 }}>
+              <p style={{ margin: '0 0 20px', fontSize: 14, color: 'var(--text)' }}>
+                Ingresá tu contraseña actual y la nueva para actualizarla.
+              </p>
+              <form onSubmit={handleCambiarPassword}>
+                {[
+                  { label: 'Contraseña actual', value: passActual, setter: setPassActual },
+                  { label: 'Nueva contraseña',  value: passNueva,  setter: setPassNueva },
+                  { label: 'Confirmar nueva contraseña', value: passConfirmar, setter: setPassConfirmar },
+                ].map(({ label, value, setter }) => (
+                  <div key={label} style={{ marginBottom: 16 }}>
+                    <label style={{ display: 'block', fontSize: 12, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.5px', color: 'var(--text)', marginBottom: 6 }}>
+                      {label}
+                    </label>
+                    <input
+                      type="password"
+                      required
+                      value={value}
+                      onChange={e => setter(e.target.value)}
+                      style={{
+                        width: '100%', boxSizing: 'border-box',
+                        padding: '9px 12px', borderRadius: 8,
+                        border: '1px solid var(--border)',
+                        background: 'var(--bg)', color: 'var(--text-h)',
+                        fontFamily: 'var(--sans)', fontSize: 14,
+                      }}
+                    />
+                  </div>
+                ))}
+
+                {passMsg && (
+                  <p style={{
+                    margin: '0 0 14px',
+                    fontSize: 13,
+                    color: passMsg.tipo === 'ok' ? '#16a34a' : '#dc2626',
+                    fontWeight: 500,
+                  }}>
+                    {passMsg.texto}
+                  </p>
+                )}
+
+                <button
+                  type="submit"
+                  disabled={passLoading}
+                  style={{
+                    background: 'var(--accent)', color: '#fff',
+                    border: 'none', borderRadius: 8,
+                    padding: '10px 22px', fontSize: 14, fontWeight: 600,
+                    cursor: passLoading ? 'not-allowed' : 'pointer',
+                    fontFamily: 'var(--sans)', opacity: passLoading ? 0.7 : 1,
+                  }}
+                >
+                  {passLoading ? 'Guardando...' : 'Actualizar contraseña'}
+                </button>
+              </form>
+            </div>
+          )}
+
         </div>
 
       </div>

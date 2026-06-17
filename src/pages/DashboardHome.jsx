@@ -64,6 +64,16 @@ function DashboardHome() {
       .finally(() => setModalLoading(false));
   };
 
+  const openProximosVencerModal = () => {
+    setModal('proximos-vencer');
+    setModalError('');
+    setModalLoading(true);
+    client.get('/dashboard/proximos-vencer')
+      .then(r => setModalData(r.data.data || []))
+      .catch(() => setModalError('Error al cargar el detalle.'))
+      .finally(() => setModalLoading(false));
+  };
+
   const openLibrosStockBajoModal = () => {
     setModal('libros-stock-bajo');
     setModalError('');
@@ -76,12 +86,12 @@ function DashboardHome() {
 
   const closeModal = () => { setModal(null); setModalData([]); };
 
-  const Card = ({ label, value, onClick }) => (
+  const Card = ({ label, value, onClick, warning }) => (
     <div
       onClick={onClick}
       style={{
-        background: 'var(--card-bg)',
-        border: '1px solid var(--border)',
+        background: warning ? 'rgba(217,119,6,0.07)' : 'var(--card-bg)',
+        border: warning ? '1px solid rgba(217,119,6,0.35)' : '1px solid var(--border)',
         boxShadow: 'var(--shadow)',
         borderRadius: '12px',
         padding: '24px',
@@ -91,8 +101,8 @@ function DashboardHome() {
       onMouseEnter={e => onClick && (e.currentTarget.style.transform = 'translateY(-2px)')}
       onMouseLeave={e => onClick && (e.currentTarget.style.transform = 'translateY(0)')}
     >
-      <p style={{ margin: 0, fontSize: '13px', color: 'var(--text)' }}>{label}</p>
-      <p style={{ margin: '8px 0 0', fontSize: '32px', fontWeight: 500, color: 'var(--text-h)' }}>{value}</p>
+      <p style={{ margin: 0, fontSize: '13px', color: warning ? '#92400e' : 'var(--text)' }}>{label}</p>
+      <p style={{ margin: '8px 0 0', fontSize: '32px', fontWeight: 500, color: warning ? '#d97706' : 'var(--text-h)' }}>{value}</p>
     </div>
   );
 
@@ -144,6 +154,12 @@ function DashboardHome() {
           onClick={() => navigate('/dashboard/prestamos?estado=Activo')} />
         <Card label="Préstamos vencidos" value={stats.PrestamosVencidos}
           onClick={() => navigate('/dashboard/prestamos?estado=Vencido')} />
+        <Card
+          label="Vencen en los próximos 7 días"
+          value={stats.PrestamosProximosVencer}
+          onClick={openProximosVencerModal}
+          warning={stats.PrestamosProximosVencer > 0}
+        />
       </Section>
 
       {(modal === 'pendientes' || modal === 'vencidos') && (
@@ -230,6 +246,54 @@ function DashboardHome() {
 
           <div className="modal-footer">
             <button type="button" className="btn-sm btn-cancel" onClick={closeModal}>Cerrar</button>
+          </div>
+        </Modal>
+      )}
+
+      {modal === 'proximos-vencer' && (
+        <Modal title="Préstamos que vencen en los próximos 7 días" onClose={closeModal} size="lg">
+          {modalError && <p className="alert alert-error">{modalError}</p>}
+          <div className="table-wrapper">
+            <table>
+              <thead>
+                <tr>
+                  <th>Afiliado</th>
+                  <th>Libro</th>
+                  <th>Vencimiento</th>
+                  <th>Días restantes</th>
+                </tr>
+              </thead>
+              <tbody>
+                {modalLoading ? (
+                  <tr><td colSpan={4} className="td-empty">Cargando…</td></tr>
+                ) : modalData.length === 0 ? (
+                  <tr><td colSpan={4} className="td-empty">No hay préstamos por vencer esta semana.</td></tr>
+                ) : modalData.map((row, i) => (
+                  <tr key={i}>
+                    <td>
+                      <div>{row.NombreAfiliado}</div>
+                      <div className="td-muted" style={{ fontSize: '12px' }}>{row.Documento}</div>
+                    </td>
+                    <td>{row.NombreLibro}</td>
+                    <td>{formatFecha(row.FechaVencimiento)}</td>
+                    <td>
+                      <span style={{
+                        fontWeight: 600,
+                        color: row.DiasRestantes <= 2 ? '#dc2626' : '#d97706',
+                      }}>
+                        {row.DiasRestantes === 0 ? 'Hoy' : `${row.DiasRestantes} día${row.DiasRestantes !== 1 ? 's' : ''}`}
+                      </span>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+          <div className="modal-footer">
+            <button type="button" className="btn-sm btn-cancel" onClick={closeModal}>Cerrar</button>
+            <button type="button" className="btn-primary btn-inline" onClick={() => navigate('/dashboard/prestamos')}>
+              Ver préstamos
+            </button>
           </div>
         </Modal>
       )}
