@@ -15,6 +15,7 @@ import Reportes from './pages/Reportes';
 import Creditos from './pages/Creditos';
 import CajaChica from './pages/CajaChica';
 import SolicitudesAcceso from './pages/SolicitudesAcceso';
+import UsuariosWeb from './pages/UsuariosWeb';
 import PortalLogin from './pages/portal/PortalLogin';
 import PortalHome from './pages/portal/PortalHome';
 
@@ -49,6 +50,7 @@ function App() {
           <Route path="creditos" element={<Creditos />} />
           <Route path="cajachica" element={<CajaChica />} />
           <Route path="solicitudes-acceso" element={<SolicitudesAcceso />} />
+          <Route path="usuarios-web" element={<UsuariosWeb />} />
         </Route>
 
         <Route path="*" element={<Navigate to="/" replace />} />

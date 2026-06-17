@@ -23,8 +23,8 @@ function Login() {
       const token = response.data.data.access_token;
       localStorage.setItem('apmu_token', token);
       navigate('/dashboard', { replace: true });
-    } catch {
-      setError('Usuario o contraseña incorrectos.');
+    } catch (err) {
+      setError(err.response?.data?.message || 'Usuario o contraseña incorrectos.');
     } finally {
       setLoading(false);
     }

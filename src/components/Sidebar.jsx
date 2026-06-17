@@ -32,6 +32,7 @@ function Sidebar({ isOpen, onClose }) {
         <NavLink to="/dashboard/creditos">Créditos históricos</NavLink>
         <NavLink to="/dashboard/cajachica">Caja chica</NavLink>
         <NavLink to="/dashboard/solicitudes-acceso">Solicitudes de acceso</NavLink>
+        <NavLink to="/dashboard/usuarios-web" onClick={handleNav}>Usuarios del sistema</NavLink>
         
         
       </nav>
