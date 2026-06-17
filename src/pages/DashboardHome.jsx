@@ -1,6 +1,10 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import client from '../api/client';
+import {
+  AreaChart, Area, BarChart, Bar, PieChart, Pie, Cell,
+  XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer,
+} from 'recharts';
 import { getCuentaCorriente } from '../api/cuentacorriente';
 import { getAfiliados } from '../api/afiliados';
 import { getLibros } from '../api/libros';
@@ -19,6 +23,8 @@ function DashboardHome() {
   const periodoActual = `${meses[ahora.getMonth()]} ${ahora.getFullYear()}`;
   const aniomesActual = parseInt(`${ahora.getFullYear()}${String(ahora.getMonth() + 1).padStart(2, '0')}`);
 
+  const [graficos, setGraficos] = useState(null);
+
   const [modal, setModal]               = useState(null);
   const [modalData, setModalData]       = useState([]);
   const [modalLoading, setModalLoading] = useState(false);
@@ -29,6 +35,20 @@ function DashboardHome() {
       .then(r => setStats(r.data.data))
       .catch(() => setError('Error al cargar estadísticas.'))
       .finally(() => setLoading(false));
+  }, []);
+
+  useEffect(() => {
+    Promise.all([
+      client.get('/dashboard/recaudacion-mensual'),
+      client.get('/dashboard/prestamos-por-estado'),
+      client.get('/dashboard/libros-mas-prestados'),
+    ]).then(([rec, est, lib]) => {
+      setGraficos({
+        recaudacion: rec.data.data,
+        estados: est.data.data,
+        libros: lib.data.data,
+      });
+    }).catch(() => {});
   }, []);
 
   if (loading) return <div className="page"><p>Cargando…</p></div>;
@@ -161,6 +181,102 @@ function DashboardHome() {
           warning={stats.PrestamosProximosVencer > 0}
         />
       </Section>
+
+      {graficos && (
+        <>
+          <h3 style={{
+            margin: '0 0 12px', fontSize: '14px', fontWeight: 600,
+            color: 'var(--text)', textTransform: 'uppercase', letterSpacing: '0.05em',
+            borderBottom: '1px solid var(--border)', paddingBottom: '8px',
+          }}>
+            Estadísticas
+          </h3>
+
+          {/* Recaudación mensual - ancho completo */}
+          <div style={{
+            background: 'var(--card-bg)', border: '1px solid var(--border)',
+            borderRadius: 12, padding: '20px 24px', marginBottom: 16, boxShadow: 'var(--shadow)',
+          }}>
+            <p style={{ margin: '0 0 16px', fontSize: 13, fontWeight: 600, color: 'var(--text)' }}>
+              Recaudación mensual
+            </p>
+            <ResponsiveContainer width="100%" height={200}>
+              <AreaChart data={graficos.recaudacion} margin={{ top: 4, right: 16, left: 8, bottom: 0 }}>
+                <defs>
+                  <linearGradient id="gradAcc" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor="#c0392b" stopOpacity={0.18} />
+                    <stop offset="95%" stopColor="#c0392b" stopOpacity={0} />
+                  </linearGradient>
+                </defs>
+                <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
+                <XAxis dataKey="Aniomes" tickFormatter={formatPeriodo} tick={{ fontSize: 11, fill: 'var(--text)' }} />
+                <YAxis tickFormatter={v => `$${(v / 1000).toFixed(0)}k`} tick={{ fontSize: 11, fill: 'var(--text)' }} width={52} />
+                <Tooltip
+                  formatter={v => [`$ ${Number(v).toLocaleString('es-UY', { minimumFractionDigits: 2 })}`, 'Recaudado']}
+                  labelFormatter={formatPeriodo}
+                  contentStyle={{ background: 'var(--card-bg)', border: '1px solid var(--border)', borderRadius: 8, fontSize: 13 }}
+                />
+                <Area type="monotone" dataKey="Total" stroke="#c0392b" strokeWidth={2} fill="url(#gradAcc)" dot={false} />
+              </AreaChart>
+            </ResponsiveContainer>
+          </div>
+
+          {/* Pie + Barras - lado a lado */}
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 2fr', gap: 16, marginBottom: 32 }}>
+
+            {/* Estado de préstamos */}
+            <div style={{
+              background: 'var(--card-bg)', border: '1px solid var(--border)',
+              borderRadius: 12, padding: '20px 24px', boxShadow: 'var(--shadow)',
+            }}>
+              <p style={{ margin: '0 0 8px', fontSize: 13, fontWeight: 600, color: 'var(--text)' }}>
+                Estado de préstamos
+              </p>
+              <ResponsiveContainer width="100%" height={200}>
+                <PieChart>
+                  <Pie data={graficos.estados} dataKey="Cantidad" nameKey="Estado"
+                    innerRadius={52} outerRadius={78} paddingAngle={3}>
+                    {graficos.estados.map(entry => {
+                      const col = { Activo: '#2563eb', Devuelto: '#16a34a', Vencido: '#dc2626' };
+                      return <Cell key={entry.Estado} fill={col[entry.Estado] || '#94a3b8'} />;
+                    })}
+                  </Pie>
+                  <Tooltip contentStyle={{ background: 'var(--card-bg)', border: '1px solid var(--border)', borderRadius: 8, fontSize: 13 }} />
+                  <Legend iconSize={10} wrapperStyle={{ fontSize: 12 }} />
+                </PieChart>
+              </ResponsiveContainer>
+            </div>
+
+            {/* Libros más prestados */}
+            <div style={{
+              background: 'var(--card-bg)', border: '1px solid var(--border)',
+              borderRadius: 12, padding: '20px 24px', boxShadow: 'var(--shadow)',
+            }}>
+              <p style={{ margin: '0 0 8px', fontSize: 13, fontWeight: 600, color: 'var(--text)' }}>
+                Libros más prestados
+              </p>
+              {graficos.libros.length === 0 ? (
+                <p style={{ fontSize: 13, color: 'var(--text)', marginTop: 40, textAlign: 'center' }}>Sin datos aún</p>
+              ) : (
+                <ResponsiveContainer width="100%" height={graficos.libros.length * 32 + 20}>
+                  <BarChart layout="vertical" data={graficos.libros} margin={{ top: 0, right: 24, left: 8, bottom: 0 }}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" horizontal={false} />
+                    <XAxis type="number" allowDecimals={false} tick={{ fontSize: 11, fill: 'var(--text)' }} />
+                    <YAxis type="category" dataKey="Nombre" width={160}
+                      tick={{ fontSize: 11, fill: 'var(--text)' }}
+                      tickFormatter={v => v.length > 22 ? v.substring(0, 22) + '…' : v} />
+                    <Tooltip
+                      formatter={v => [v, 'Préstamos']}
+                      contentStyle={{ background: 'var(--card-bg)', border: '1px solid var(--border)', borderRadius: 8, fontSize: 13 }}
+                    />
+                    <Bar dataKey="Veces" fill="#c0392b" radius={[0, 4, 4, 0]} />
+                  </BarChart>
+                </ResponsiveContainer>
+              )}
+            </div>
+          </div>
+        </>
+      )}
 
       {(modal === 'pendientes' || modal === 'vencidos') && (
         <Modal
