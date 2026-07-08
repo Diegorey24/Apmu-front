@@ -18,6 +18,8 @@ import SolicitudesAcceso from './pages/SolicitudesAcceso';
 import UsuariosWeb from './pages/UsuariosWeb';
 import PortalLogin from './pages/portal/PortalLogin';
 import PortalHome from './pages/portal/PortalHome';
+import Categorias from './pages/Categorias';
+import Ubicaciones from './pages/Ubicaciones';
 
 function App() {
   return (
@@ -51,6 +53,8 @@ function App() {
           <Route path="cajachica" element={<CajaChica />} />
           <Route path="solicitudes-acceso" element={<SolicitudesAcceso />} />
           <Route path="usuarios-web" element={<UsuariosWeb />} />
+          <Route path="categorias" element={<Categorias />} />
+          <Route path="ubicaciones" element={<Ubicaciones />} />
         </Route>
 
         <Route path="*" element={<Navigate to="/" replace />} />
