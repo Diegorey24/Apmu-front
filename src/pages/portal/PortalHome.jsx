@@ -1,8 +1,10 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { getMisDatos, cambiarPassword } from '../../api/portalSocio';
+import axios from 'axios';
+import { getMisDatos, cambiarPassword, actualizarContacto, getMisHijos, solicitarLibro, getMisSolicitudes } from '../../api/portalSocio';
 
-const meses = ['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Set','Oct','Nov','Dic'];
+
+const meses = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Set', 'Oct', 'Nov', 'Dic'];
 
 const formatPeriodo = (aniomes) => {
   const s = String(aniomes);
@@ -19,9 +21,9 @@ const formatFecha = (fechaStr) => {
 
 const estadoBadge = (estado) => {
   const cfg = {
-    Activo:   { bg: 'rgba(37,99,235,0.1)',  color: '#2563eb' },
-    Devuelto: { bg: 'rgba(22,163,74,0.1)',  color: '#16a34a' },
-    Vencido:  { bg: 'rgba(220,38,38,0.1)',  color: '#dc2626' },
+    Activo: { bg: 'rgba(37,99,235,0.1)', color: '#2563eb' },
+    Devuelto: { bg: 'rgba(22,163,74,0.1)', color: '#16a34a' },
+    Vencido: { bg: 'rgba(220,38,38,0.1)', color: '#dc2626' },
   };
   const c = cfg[estado] || { bg: 'rgba(107,99,117,0.1)', color: 'var(--text)' };
   return (
@@ -44,12 +46,36 @@ export default function PortalHome() {
   const [passConfirmar, setPassConfirmar] = useState('');
   const [passMsg, setPassMsg] = useState(null); // { tipo: 'ok'|'error', texto }
   const [passLoading, setPassLoading] = useState(false);
+  const [formContacto, setFormContacto] = useState({ mail: '', celular: '', telefono: '', domicilio: '' });
+  const [contactoMsg, setContactoMsg] = useState(null);
+  const [contactoLoading, setContactoLoading] = useState(false);
+  const [hijos, setHijos] = useState([]);
+  const [librosDisponibles, setLibrosDisponibles] = useState([]);
+  const [solicitudesPrestamo, setSolicitudesPrestamo] = useState([]);
+  const [busquedaLibro, setBusquedaLibro] = useState('');
+  const [errorSolicitud, setErrorSolicitud] = useState('');
+  const [exitoSolicitud, setExitoSolicitud] = useState('');
 
   const nombre = localStorage.getItem('portal_nombre') || '';
 
   useEffect(() => {
     getMisDatos()
-      .then(res => setDatos(res.data.data))
+      .then(res => {
+        setDatos(res.data.data);
+        const a = res.data.data?.afiliado;
+        if (a) setFormContacto({
+          mail: a.Mail || '',
+          celular: a.Celular?.trim() || '',
+          telefono: a.Telefono?.trim() || '',
+          domicilio: a.Domicilio || '',
+        });
+        getMisHijos()
+          .then(res => setHijos(res.data.data || []))
+          .catch(() => { });
+        getMisSolicitudes()
+          .then(res => setSolicitudesPrestamo(res.data.data || []))
+          .catch(() => { });
+      })
       .catch(() => setError('Error al cargar tus datos'))
       .finally(() => setLoading(false));
   }, []);
@@ -75,6 +101,29 @@ export default function PortalHome() {
     }
   };
 
+  const buscarLibros = async (texto) => {
+    setBusquedaLibro(texto);
+    if (texto.length < 2) { setLibrosDisponibles([]); return; }
+    try {
+      const res = await axios.get(`${import.meta.env.VITE_API_URL}/libros`, { params: { busqueda: texto } });
+      setLibrosDisponibles(res.data.data.filter(l => l.Stock > 0 && !l.FechaBaja));
+    } catch { setLibrosDisponibles([]); }
+  };
+
+  const handleSolicitarLibro = async (idLibro) => {
+    setErrorSolicitud('');
+    setExitoSolicitud('');
+    try {
+      await solicitarLibro(idLibro);
+      setExitoSolicitud('Solicitud enviada correctamente');
+      setBusquedaLibro('');
+      setLibrosDisponibles([]);
+      const res = await getMisSolicitudes();
+      setSolicitudesPrestamo(res.data.data || []);
+    } catch (err) {
+      setErrorSolicitud(err.response?.data?.message || 'Error al solicitar');
+    }
+  };
   const cerrarSesion = () => {
     localStorage.removeItem('portal_token');
     localStorage.removeItem('portal_nombre');
@@ -98,6 +147,20 @@ export default function PortalHome() {
   const prestamosActivos = datos?.prestamos?.filter(p => p.Estado === 'Activo').length ?? 0;
   const totalPrestamos = datos?.prestamos?.length ?? 0;
   const totalAportes = datos?.aportes?.length ?? 0;
+
+  const handleActualizarContacto = async (e) => {
+    e.preventDefault();
+    setContactoMsg(null);
+    setContactoLoading(true);
+    try {
+      await actualizarContacto(formContacto);
+      setContactoMsg({ tipo: 'ok', texto: 'Datos actualizados correctamente' });
+    } catch (err) {
+      setContactoMsg({ tipo: 'error', texto: err.response?.data?.message || 'Error al actualizar' });
+    } finally {
+      setContactoLoading(false);
+    }
+  };
 
   return (
     <div style={{ minHeight: '100vh', background: 'var(--bg)', fontFamily: 'var(--sans)', color: 'var(--text-h)' }}>
@@ -200,8 +263,8 @@ export default function PortalHome() {
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 12, marginBottom: 16 }}>
           {[
             { label: 'Préstamos activos', value: prestamosActivos, accent: true },
-            { label: 'Total préstamos',   value: totalPrestamos,   accent: false },
-            { label: 'Aportes',           value: totalAportes,     accent: false },
+            { label: 'Total préstamos', value: totalPrestamos, accent: false },
+            { label: 'Aportes', value: totalAportes, accent: false },
           ].map(s => (
             <div key={s.label} style={{
               background: s.accent ? 'var(--accent-bg)' : 'var(--card-bg)',
@@ -229,7 +292,7 @@ export default function PortalHome() {
         }}>
           {/* Tabs */}
           <div style={{ borderBottom: '1px solid var(--border)', padding: '0 20px', display: 'flex' }}>
-            {[{ id: 'prestamos', l: 'Mis préstamos' }, { id: 'aportes', l: 'Mis aportes' }, { id: 'password', l: 'Cambiar contraseña' }].map(t => (
+            {[{ id: 'prestamos', l: 'Mis préstamos' }, { id: 'aportes', l: 'Mis aportes' }, { id: 'solicitar', l: 'Solicitar libro' }, { id: 'hijos', l: 'Mis hijos' }, { id: 'contacto', l: 'Mis datos de contacto' }, { id: 'password', l: 'Cambiar contraseña' }].map(t => (
               <button key={t.id} onClick={() => setTab(t.id)} style={{
                 padding: '13px 16px',
                 border: 'none', background: 'none',
@@ -248,53 +311,53 @@ export default function PortalHome() {
           </div>
 
           {/* Préstamos */}
-        {tab === 'prestamos' && (
-        <>
-            {datos?.prestamos?.length === 0 ? (
-            <p style={{ color: 'var(--color-text-secondary)' }}>No tenés préstamos registrados.</p>
-            ) : datos?.prestamos?.map(p => (
-            <div key={p.Id} style={{
-                background: 'var(--color-background-secondary)',
-                borderRadius: 12, padding: 20, marginBottom: 16
-            }}>
-                {/* Cabezal del préstamo */}
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
-                <div>
-                    <span style={{ fontWeight: 600 }}>Préstamo #{p.Id}</span>
-                    <span style={{ marginLeft: 12, color: 'var(--color-text-secondary)', fontSize: 13 }}>
-                    {new Date(p.FechaPrestamo).toLocaleDateString('es-UY')}
-                    </span>
-                </div>
-                {estadoBadge(p.Estado)}
-                </div>
+          {tab === 'prestamos' && (
+            <>
+              {datos?.prestamos?.length === 0 ? (
+                <p style={{ color: 'var(--color-text-secondary)' }}>No tenés préstamos registrados.</p>
+              ) : datos?.prestamos?.map(p => (
+                <div key={p.Id} style={{
+                  background: 'var(--color-background-secondary)',
+                  borderRadius: 12, padding: 20, marginBottom: 16
+                }}>
+                  {/* Cabezal del préstamo */}
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
+                    <div>
+                      <span style={{ fontWeight: 600 }}>Préstamo #{p.Id}</span>
+                      <span style={{ marginLeft: 12, color: 'var(--color-text-secondary)', fontSize: 13 }}>
+                        {new Date(p.FechaPrestamo).toLocaleDateString('es-UY')}
+                      </span>
+                    </div>
+                    {estadoBadge(p.Estado)}
+                  </div>
 
-                {/* Líneas */}
-                <table className="tabla" style={{ marginBottom: 0 }}>
-                <thead>
-                    <tr>
-                    <th>Libro</th>
-                    <th>Tipo</th>
-                    <th>Costo</th>
-                    <th>Vencimiento</th>
-                    <th>Devolución</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {p.lineas.map(l => (
-                    <tr key={l.Id} style={{ opacity: l.FechaDevolucion ? 0.6 : 1 }}>
-                        <td>{l.NombreLibro}</td>
-                        <td>{l.Tipo}</td>
-                        <td>{l.Tipo === 'Estudio' && l.Costo ? `$ ${Number(l.Costo).toFixed(2)}` : '—'}</td>
-                        <td>{l.FechaVencimiento ? new Date(l.FechaVencimiento).toLocaleDateString('es-UY') : '—'}</td>
-                        <td>{l.FechaDevolucion ? new Date(l.FechaDevolucion).toLocaleDateString('es-UY') : 'Pendiente'}</td>
-                    </tr>
-                    ))}
-                </tbody>
-                </table>
-            </div>
-            ))}
-        </>
-        )}
+                  {/* Líneas */}
+                  <table className="tabla" style={{ marginBottom: 0 }}>
+                    <thead>
+                      <tr>
+                        <th>Libro</th>
+                        <th>Tipo</th>
+                        <th>Costo</th>
+                        <th>Vencimiento</th>
+                        <th>Devolución</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {p.lineas.map(l => (
+                        <tr key={l.Id} style={{ opacity: l.FechaDevolucion ? 0.6 : 1 }}>
+                          <td>{l.NombreLibro}</td>
+                          <td>{l.Tipo}</td>
+                          <td>{l.Tipo === 'Estudio' && l.Costo ? `$ ${Number(l.Costo).toFixed(2)}` : '—'}</td>
+                          <td>{l.FechaVencimiento ? new Date(l.FechaVencimiento).toLocaleDateString('es-UY') : '—'}</td>
+                          <td>{l.FechaDevolucion ? new Date(l.FechaDevolucion).toLocaleDateString('es-UY') : 'Pendiente'}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              ))}
+            </>
+          )}
 
           {/* Aportes */}
           {tab === 'aportes' && (
@@ -328,7 +391,155 @@ export default function PortalHome() {
               </table>
             )
           )}
-          {/* Cambiar contraseña */}
+          {tab === 'solicitar' && (
+            <div style={{ padding: 24 }}>
+              <div style={{ marginBottom: 24, position: 'relative' }}>
+                <p style={{ margin: '0 0 12px', fontSize: 14, color: 'var(--text)' }}>
+                  Buscá un libro disponible y enviá tu solicitud. La administración la procesará a la brevedad.
+                </p>
+                <input
+                  style={{ width: '100%', boxSizing: 'border-box', padding: '9px 12px', borderRadius: 8, border: '1px solid var(--border)', background: 'var(--bg)', color: 'var(--text-h)', fontFamily: 'var(--sans)', fontSize: 14 }}
+                  placeholder="Buscá por nombre o ISBN..."
+                  value={busquedaLibro}
+                  onChange={e => buscarLibros(e.target.value)}
+                />
+                {librosDisponibles.length > 0 && (
+                  <div style={{ border: '1px solid var(--border)', borderRadius: 6, marginTop: 4, maxHeight: 200, overflowY: 'auto', background: 'var(--card-bg)' }}>
+                    {librosDisponibles.map(l => (
+                      <div key={l.Id}
+                        style={{ padding: '10px 16px', borderBottom: '1px solid var(--border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                        <div>
+                          <p style={{ margin: 0, fontWeight: 500, fontSize: 14, color: 'var(--text-h)' }}>{l.Nombre}</p>
+                          <p style={{ margin: '2px 0 0', fontSize: 12, color: 'var(--text)' }}>{l.Tipo} — Stock: {l.Stock}</p>
+                        </div>
+                        <button onClick={() => handleSolicitarLibro(l.Id)}
+                          style={{ background: 'var(--accent)', color: '#fff', border: 'none', borderRadius: 6, padding: '6px 14px', fontSize: 13, fontWeight: 600, cursor: 'pointer', fontFamily: 'var(--sans)', flexShrink: 0 }}>
+                          Solicitar
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+                {errorSolicitud && <p style={{ color: '#dc2626', fontSize: 13, marginTop: 8 }}>{errorSolicitud}</p>}
+                {exitoSolicitud && <p style={{ color: '#16a34a', fontSize: 13, marginTop: 8 }}>{exitoSolicitud}</p>}
+              </div>
+
+              {/* Mis solicitudes */}
+              <h3 style={{ fontSize: 14, fontWeight: 600, marginBottom: 12 }}>Mis solicitudes</h3>
+              {solicitudesPrestamo.length === 0 ? (
+                <p style={{ fontSize: 14, color: 'var(--text)' }}>No tenés solicitudes registradas.</p>
+              ) : (
+                <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 14 }}>
+                  <thead>
+                    <tr style={{ background: 'var(--bg)' }}>
+                      {['Libro', 'Tipo', 'Fecha', 'Estado'].map(h => (
+                        <th key={h} style={{ padding: '10px 16px', textAlign: 'left', fontSize: 11, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.5px', color: 'var(--text)', borderBottom: '1px solid var(--border)' }}>{h}</th>
+                      ))}
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {solicitudesPrestamo.map(s => {
+                      const color = s.Estado === 'Aprobada' ? '#16a34a' : s.Estado === 'Rechazada' ? '#dc2626' : '#f59e0b';
+                      return (
+                        <tr key={s.Id} style={{ borderBottom: '1px solid var(--border)' }}>
+                          <td style={{ padding: '10px 16px', color: 'var(--text-h)', fontWeight: 500 }}>{s.NombreLibro}</td>
+                          <td style={{ padding: '10px 16px', color: 'var(--text)' }}>{s.Tipo}</td>
+                          <td style={{ padding: '10px 16px', color: 'var(--text)' }}>{s.FechaSolicitud?.substring(0, 10)}</td>
+                          <td style={{ padding: '10px 16px', color, fontWeight: 600, fontSize: 13 }}>{s.Estado}</td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              )}
+            </div>
+          )}
+          {tab === 'hijos' && (
+            <div style={{ padding: 24 }}>
+              {hijos.length === 0 ? (
+                <div style={{ padding: '40px 24px', textAlign: 'center', color: 'var(--text)', fontSize: 14 }}>
+                  No tenés hijos registrados. Contactá a la administración para agregarlos.
+                </div>
+              ) : (
+                <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 14 }}>
+                  <thead>
+                    <tr style={{ background: 'var(--bg)' }}>
+                      {['Nombre', 'Documento', 'Fecha de nacimiento', 'Partida validada'].map(h => (
+                        <th key={h} style={{ padding: '10px 20px', textAlign: 'left', fontSize: 11, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.5px', color: 'var(--text)', borderBottom: '1px solid var(--border)', whiteSpace: 'nowrap' }}>{h}</th>
+                      ))}
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {hijos.map(h => (
+                      <tr key={h.Id} style={{ borderBottom: '1px solid var(--border)' }}>
+                        <td style={{ padding: '11px 20px', fontWeight: 500, color: 'var(--text-h)' }}>
+                          {h.PrimerNombre} {h.PrimerApellido}{h.SegundoApellido ? ` ${h.SegundoApellido}` : ''}
+                        </td>
+                        <td style={{ padding: '11px 20px', color: 'var(--text-h)' }}>{h.Documento || '—'}</td>
+                        <td style={{ padding: '11px 20px', color: 'var(--text-h)' }}>
+                          {h.FechaNacimiento ? h.FechaNacimiento.substring(0, 10) : '—'}
+                        </td>
+                        <td style={{ padding: '11px 20px' }}>
+                          {h.Validado ? (
+                            <span style={{ color: '#16a34a', fontWeight: 600, fontSize: 13 }}>✓ Validada</span>
+                          ) : (
+                            <span style={{ color: '#d97706', fontWeight: 600, fontSize: 13 }}>⚠ Pendiente de validación</span>
+                          )}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              )}
+            </div>
+          )}
+          {tab === 'contacto' && (
+            <div style={{ padding: '32px 28px', maxWidth: 480 }}>
+              <p style={{ margin: '0 0 20px', fontSize: 14, color: 'var(--text)' }}>
+                Podés actualizar tu información de contacto. Los datos personales solo los puede modificar la administración.
+              </p>
+              <form onSubmit={handleActualizarContacto}>
+                {[
+                  { label: 'Email', key: 'mail', type: 'email' },
+                  { label: 'Celular', key: 'celular', type: 'text' },
+                  { label: 'Teléfono', key: 'telefono', type: 'text' },
+                  { label: 'Domicilio', key: 'domicilio', type: 'text' },
+                ].map(({ label, key, type }) => (
+                  <div key={key} style={{ marginBottom: 16 }}>
+                    <label style={{ display: 'block', fontSize: 12, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.5px', color: 'var(--text)', marginBottom: 6 }}>
+                      {label}
+                    </label>
+                    <input
+                      type={type}
+                      value={formContacto[key]}
+                      onChange={e => setFormContacto(f => ({ ...f, [key]: e.target.value }))}
+                      style={{
+                        width: '100%', boxSizing: 'border-box',
+                        padding: '9px 12px', borderRadius: 8,
+                        border: '1px solid var(--border)',
+                        background: 'var(--bg)', color: 'var(--text-h)',
+                        fontFamily: 'var(--sans)', fontSize: 14,
+                      }}
+                    />
+                  </div>
+                ))}
+                {contactoMsg && (
+                  <p style={{ margin: '0 0 14px', fontSize: 13, fontWeight: 500, color: contactoMsg.tipo === 'ok' ? '#16a34a' : '#dc2626' }}>
+                    {contactoMsg.texto}
+                  </p>
+                )}
+                <button type="submit" disabled={contactoLoading} style={{
+                  background: 'var(--accent)', color: '#fff',
+                  border: 'none', borderRadius: 8,
+                  padding: '10px 22px', fontSize: 14, fontWeight: 600,
+                  cursor: contactoLoading ? 'not-allowed' : 'pointer',
+                  fontFamily: 'var(--sans)', opacity: contactoLoading ? 0.7 : 1,
+                }}>
+                  {contactoLoading ? 'Guardando...' : 'Guardar cambios'}
+                </button>
+              </form>
+            </div>
+          )}
           {tab === 'password' && (
             <div style={{ padding: '32px 28px', maxWidth: 400 }}>
               <p style={{ margin: '0 0 20px', fontSize: 14, color: 'var(--text)' }}>
@@ -337,7 +548,7 @@ export default function PortalHome() {
               <form onSubmit={handleCambiarPassword}>
                 {[
                   { label: 'Contraseña actual', value: passActual, setter: setPassActual },
-                  { label: 'Nueva contraseña',  value: passNueva,  setter: setPassNueva },
+                  { label: 'Nueva contraseña', value: passNueva, setter: setPassNueva },
                   { label: 'Confirmar nueva contraseña', value: passConfirmar, setter: setPassConfirmar },
                 ].map(({ label, value, setter }) => (
                   <div key={label} style={{ marginBottom: 16 }}>

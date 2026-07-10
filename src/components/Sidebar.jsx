@@ -11,6 +11,8 @@ const grupos = [
       { to: '/dashboard/categorias', label: 'Categorías' },
       { to: '/dashboard/rubros', label: 'Rubros' },
       { to: '/dashboard/ubicaciones', label: 'Ubicaciones' },
+      { to: '/dashboard/solicitudes-afiliacion', label: 'Solicitudes de afiliación' },
+      { to: '/dashboard/importacion-aportes', label: 'Importar aportes' },
     ],
   },
   {
@@ -22,6 +24,7 @@ const grupos = [
       { to: '/dashboard/materias', label: 'Materias' },
       { to: '/dashboard/prestamos', label: 'Préstamos' },
       { to: '/dashboard/autores', label: 'Autores' },
+      { to: '/dashboard/solicitudes-prestamo', label: 'Solicitudes de préstamo' },
     ],
   },
   {
@@ -30,7 +33,15 @@ const grupos = [
     links: [
       { to: '/dashboard/cuenta-corriente', label: 'Aportes' },
       { to: '/dashboard/cajachica', label: 'Caja chica' },
-      { to: '/dashboard/creditos', label: 'Créditos históricos' },
+      { to: '/dashboard/creditos', label: 'Créditos Históricos CPMU' },
+    ],
+  },
+  {
+    id: 'gremial',
+    label: 'Gestión gremial',
+    links: [
+      { to: '/dashboard/licencias-gremiales', label: 'Licencias gremiales' },
+      { to: '/dashboard/beneficios', label: 'Beneficios' },
     ],
   },
   {
@@ -58,7 +69,7 @@ function Sidebar({ isOpen, onClose }) {
     g.links.some(l => location.pathname.startsWith(l.to))
   )?.id;
 
-  const [abiertos, setAbiertos] = useState(grupoActivo ? [grupoActivo] : ['socios']);
+  const [abiertos, setAbiertos] = useState(grupoActivo ? [grupoActivo] : []);
 
   const logout = () => {
     localStorage.removeItem('apmu_token');

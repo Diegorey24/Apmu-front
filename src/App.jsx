@@ -20,6 +20,12 @@ import PortalLogin from './pages/portal/PortalLogin';
 import PortalHome from './pages/portal/PortalHome';
 import Categorias from './pages/Categorias';
 import Ubicaciones from './pages/Ubicaciones';
+import SolicitudAfiliacion from './pages/SolicitudAfiliacion';
+import GestionSolicitudesAfiliacion from './pages/GestionSolicitudesAfiliacion';
+import ImportacionAportes from './pages/ImportacionAportes';
+import LicenciasGremiales from './pages/LicenciasGremiales';
+import Beneficios from './pages/Beneficios';
+import GestionSolicitudesPrestamo from './pages/GestionSolicitudesPrestamo';
 
 function App() {
   return (
@@ -30,6 +36,7 @@ function App() {
         {/* Portal del socio*/}
         <Route path="/portal/login" element={<PortalLogin />} />
         <Route path="/portal" element={<PortalHome />} />
+        <Route path="/solicitud-afiliacion" element={<SolicitudAfiliacion />} />
 
         <Route
           path="/dashboard"
@@ -55,6 +62,11 @@ function App() {
           <Route path="usuarios-web" element={<UsuariosWeb />} />
           <Route path="categorias" element={<Categorias />} />
           <Route path="ubicaciones" element={<Ubicaciones />} />
+          <Route path="solicitudes-afiliacion" element={<GestionSolicitudesAfiliacion />} />
+          <Route path="importacion-aportes" element={<ImportacionAportes />} />
+          <Route path="licencias-gremiales" element={<LicenciasGremiales />} />
+          <Route path="beneficios" element={<Beneficios />} />
+          <Route path="solicitudes-prestamo" element={<GestionSolicitudesPrestamo />} />
         </Route>
 
         <Route path="*" element={<Navigate to="/" replace />} />

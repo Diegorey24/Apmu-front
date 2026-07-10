@@ -79,7 +79,7 @@ export default function Creditos() {
   return (
     <div className="page">
       <div className="page-header">
-        <h1>Créditos históricos</h1>
+        <h1>Créditos Históricos CPMU</h1>
       </div>
 
       {/* Filtros */}
@@ -164,7 +164,7 @@ export default function Creditos() {
             {[
               ['Nº crédito', detalle.Numero],
               ['Socio', detalle.NombreSocio || '—'],
-            ['Documento', detalle.DocumentoSocio || '—'],
+              ['Documento', detalle.DocumentoSocio || '—'],
               ['Estado', detalle.Estado],
               ['Tipo solicitud', detalle.TipoSolicitud],
               ['Finalidad', detalle.Finalidad],
