@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { getPortalPendientes, aprobarPortal, rechazarPortal } from '../api/portal';
+import { getPortalPendientes, aprobarPortal, rechazarPortal, resetPasswordPortal, eliminarSolicitudPortal } from '../api/portal';
 import Modal from '../components/Modal';
 
 export default function SolicitudesAcceso() {
@@ -7,6 +7,9 @@ export default function SolicitudesAcceso() {
   const [loading, setLoading] = useState(true);
   const [modal, setModal] = useState(null);
   const [error, setError] = useState('');
+  const [modalReset, setModalReset] = useState(null);
+  const [nuevaPassword, setNuevaPassword] = useState('');
+  const [resetError, setResetError] = useState('');
 
   const cargar = async () => {
     setLoading(true);
@@ -42,6 +45,27 @@ export default function SolicitudesAcceso() {
       cargar();
     } catch (err) {
       alert(err.response?.data?.message || 'Error al rechazar');
+    }
+  };
+
+  const resetPassword = async () => {
+    if (!nuevaPassword || nuevaPassword.length < 6) { setResetError('Mínimo 6 caracteres'); return; }
+    try {
+      await resetPasswordPortal(modalReset.Id, nuevaPassword);
+      setModalReset(null);
+      alert('Contraseña reseteada correctamente');
+    } catch (err) {
+      setResetError(err.response?.data?.message || 'Error al resetear');
+    }
+  };
+
+  const eliminarSolicitud = async (id) => {
+    if (!confirm('¿Eliminar esta solicitud? El socio podrá volver a registrarse.')) return;
+    try {
+      await eliminarSolicitudPortal(id);
+      cargar();
+    } catch (err) {
+      alert(err.response?.data?.message || 'Error al eliminar');
     }
   };
 
@@ -97,28 +121,28 @@ export default function SolicitudesAcceso() {
                       <tr key={s.Id}>
                         <td>{s.Documento}</td>
                         <td>{s.Email || '—'}</td>
-                        <td>{s.FechaRegistro ? (() => { const [y,m,d] = s.FechaRegistro.substring(0,10).split('-'); return `${d}-${m}-${y}`; })() : '—'}</td>
+                        <td>{s.FechaRegistro ? (() => { const [y, m, d] = s.FechaRegistro.substring(0, 10).split('-'); return `${d}-${m}-${y}`; })() : '—'}</td>
                         <td>
                           {s.PrimerNombre
                             ? <span style={{ color: '#16a34a', fontWeight: 500 }}>
-                                ✓ {s.PrimerNombre} {s.PrimerApellido}
-                              </span>
+                              ✓ {s.PrimerNombre} {s.PrimerApellido}
+                            </span>
                             : <span style={{ lineHeight: 1.6 }}>
-                                <span style={{
-                                  display: 'inline-block',
-                                  background: 'rgba(220,38,38,0.09)',
-                                  color: 'var(--error)',
-                                  border: '1px solid rgba(220,38,38,0.2)',
-                                  borderRadius: 6,
-                                  padding: '2px 8px',
-                                  fontSize: 12,
-                                  fontWeight: 600,
-                                }}>Sin afiliado</span>
-                                <br />
-                                <span style={{ fontSize: 11, color: 'var(--text)' }}>
-                                  Registrar primero en Afiliados
-                                </span>
+                              <span style={{
+                                display: 'inline-block',
+                                background: 'rgba(220,38,38,0.09)',
+                                color: 'var(--error)',
+                                border: '1px solid rgba(220,38,38,0.2)',
+                                borderRadius: 6,
+                                padding: '2px 8px',
+                                fontSize: 12,
+                                fontWeight: 600,
+                              }}>Sin afiliado</span>
+                              <br />
+                              <span style={{ fontSize: 11, color: 'var(--text)' }}>
+                                Registrar primero en Afiliados
                               </span>
+                            </span>
                           }
                         </td>
                         <td className="td-actions">
@@ -135,11 +159,39 @@ export default function SolicitudesAcceso() {
                           <button className="btn-sm danger" onClick={() => rechazar(s.Id)}>
                             Rechazar
                           </button>
+                          <button className="btn-sm" onClick={() => { setModalReset(s); setNuevaPassword(''); setResetError(''); }}>
+                            Reset password
+                          </button>
+                          <button className="btn-sm danger" onClick={() => eliminarSolicitud(s.Id)}>
+                            Eliminar
+                          </button>
+
                         </td>
                       </tr>
                     ))}
                   </tbody>
                 </table>
+                <Modal isOpen={!!modalReset} onClose={() => setModalReset(null)} title="Resetear contraseña">
+                  {modalReset && (
+                    <>
+                      <p style={{ fontSize: 14, color: 'var(--text)', marginBottom: 16 }}>
+                        Resetear contraseña de <strong>{modalReset.Documento}</strong>
+                      </p>
+                      <div className="form-group">
+                        <label>Nueva contraseña *</label>
+                        <input type="password" className="form-control" value={nuevaPassword}
+                          onChange={e => setNuevaPassword(e.target.value)}
+                          onKeyDown={e => e.key === 'Enter' && resetPassword()}
+                          autoFocus />
+                      </div>
+                      {resetError && <span className="error">{resetError}</span>}
+                      <div className="modal-actions">
+                        <button className="btn-sm" onClick={() => setModalReset(null)}>Cancelar</button>
+                        <button className="btn-primary btn-inline" onClick={resetPassword}>Guardar</button>
+                      </div>
+                    </>
+                  )}
+                </Modal>
               </div>
             </>
           )}

@@ -3,7 +3,7 @@ import { getUbicaciones, createUbicacion, updateUbicacion, deleteUbicacion } fro
 import Modal from '../components/Modal';
 
 const TIPOS = ['Central', 'Sucursal', 'Filial'];
-const FORM_VACIO = { codigo: '', tipo: 'Central', nombre: '' };
+const FORM_VACIO = { tipo: 'Central', nombre: '' };
 
 export default function Ubicaciones() {
     const [ubicaciones, setUbicaciones] = useState([]);
@@ -35,13 +35,12 @@ export default function Ubicaciones() {
 
     const abrirEditar = (u) => {
         setEditando(u);
-        setForm({ codigo: u.Codigo, tipo: u.Tipo, nombre: u.Nombre });
+        setForm({ tipo: u.Tipo, nombre: u.Nombre });
         setError('');
         setModalOpen(true);
     };
 
     const guardar = async () => {
-        if (!form.codigo) { setError('El código es obligatorio'); return; }
         if (!form.nombre.trim()) { setError('El nombre es obligatorio'); return; }
         try {
             if (editando) {
@@ -77,7 +76,6 @@ export default function Ubicaciones() {
                 <table className="tabla">
                     <thead>
                         <tr>
-                            <th>Código</th>
                             <th>Tipo</th>
                             <th>Nombre</th>
                             <th>Acciones</th>
@@ -85,10 +83,9 @@ export default function Ubicaciones() {
                     </thead>
                     <tbody>
                         {ubicaciones.length === 0 ? (
-                            <tr><td colSpan={4}>No hay ubicaciones cargadas</td></tr>
+                            <tr><td colSpan={3}>No hay ubicaciones cargadas</td></tr>
                         ) : ubicaciones.map(u => (
                             <tr key={u.Id}>
-                                <td>{u.Codigo}</td>
                                 <td>{u.Tipo}</td>
                                 <td>{u.Nombre}</td>
                                 <td>
@@ -104,14 +101,9 @@ export default function Ubicaciones() {
             <Modal isOpen={modalOpen} onClose={() => setModalOpen(false)}
                 title={editando ? 'Editar ubicación' : 'Nueva ubicación'}>
                 <div className="form-group">
-                    <label>Código *</label>
-                    <input className="form-control" type="number" value={form.codigo}
-                        onChange={e => setField('codigo', e.target.value)} autoFocus />
-                </div>
-                <div className="form-group">
                     <label>Tipo *</label>
                     <select className="form-control" value={form.tipo}
-                        onChange={e => setField('tipo', e.target.value)}>
+                        onChange={e => setField('tipo', e.target.value)} autoFocus>
                         {TIPOS.map(t => <option key={t} value={t}>{t}</option>)}
                     </select>
                 </div>

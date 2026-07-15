@@ -30,6 +30,32 @@ export default function SolicitudAfiliacion() {
         if (!form.documento.trim()) { setError('El documento es obligatorio'); return; }
         if (!form.primerNombre.trim()) { setError('El nombre es obligatorio'); return; }
         if (!form.primerApellido.trim()) { setError('El apellido es obligatorio'); return; }
+        // Validar cédula uruguaya
+        const validarCI = (ci) => {
+            const clean = ci.replace(/\D/g, '');
+            if (clean.length < 7 || clean.length > 8) return false;
+            const padded = clean.padStart(8, '0');
+            const digits = padded.split('').map(Number);
+            const factors = [2, 9, 8, 7, 6, 3, 4];
+            let sum = 0;
+            for (let i = 0; i < 7; i++) sum += digits[i] * factors[i];
+            const check = (10 - (sum % 10)) % 10;
+            return check === digits[7];
+        };
+
+        if (!validarCI(form.documento)) { setError('La cédula ingresada no es válida'); return; }
+
+        if (form.mail && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.mail)) {
+            setError('El mail no es válido'); return;
+        }
+
+        if (form.celular && !/^09\d{7}$/.test(form.celular.replace(/\s/g, ''))) {
+            setError('El celular debe tener formato 09XXXXXXX'); return;
+        }
+
+        if (form.telefono && !/^\d{7,8}$/.test(form.telefono.replace(/\s/g, ''))) {
+            setError('El teléfono debe tener 7 u 8 dígitos'); return;
+        }
         setSaving(true);
         try {
             await createSolicitudAfiliacion(form);

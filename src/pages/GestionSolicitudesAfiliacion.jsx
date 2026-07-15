@@ -9,6 +9,7 @@ export default function GestionSolicitudesAfiliacion() {
     const [modalRechazar, setModalRechazar] = useState(null);
     const [observaciones, setObservaciones] = useState('');
     const [error, setError] = useState('');
+    const [modalDetalle, setModalDetalle] = useState(null);
 
     const cargar = async (estado) => {
         setLoading(true);
@@ -74,7 +75,10 @@ export default function GestionSolicitudesAfiliacion() {
                         <tr>
                             <th>Nombre</th>
                             <th>Documento</th>
+                            <th>Nº Func.</th>
                             <th>Mail</th>
+                            <th>Celular</th>
+                            <th>Ubicación</th>
                             <th>Fecha solicitud</th>
                             <th>Estado</th>
                             <th>Acciones</th>
@@ -82,15 +86,19 @@ export default function GestionSolicitudesAfiliacion() {
                     </thead>
                     <tbody>
                         {solicitudes.length === 0 ? (
-                            <tr><td colSpan={6}>No hay solicitudes</td></tr>
+                            <tr><td colSpan={9}>No hay solicitudes</td></tr>
                         ) : solicitudes.map(s => (
                             <tr key={s.Id}>
-                                <td>{s.PrimerNombre} {s.PrimerApellido}</td>
+                                <td>{s.PrimerNombre} {s.PrimerApellido} {s.SegundoApellido || ''}</td>
                                 <td>{s.Documento}</td>
+                                <td>{s.NroFuncionario || '—'}</td>
                                 <td>{s.Mail || '—'}</td>
+                                <td>{s.Celular || '—'}</td>
+                                <td>{s.UbicacionNombre || '—'}</td>
                                 <td>{s.FechaSolicitud?.substring(0, 10)}</td>
                                 <td>{estadoBadge(s.Estado)}</td>
                                 <td>
+                                    <button className="btn-sm" onClick={() => setModalDetalle(s)}>Ver</button>
                                     {s.Estado === 'Pendiente' && (
                                         <>
                                             <button className="btn-sm" onClick={() => aprobar(s.Id)}>Aprobar</button>
@@ -105,6 +113,36 @@ export default function GestionSolicitudesAfiliacion() {
                     </tbody>
                 </table>
             )}
+
+            <Modal isOpen={!!modalDetalle} onClose={() => setModalDetalle(null)}
+                title="Detalle de solicitud">
+                {modalDetalle && (
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px 24px', fontSize: 14 }}>
+                        <div><strong>Documento:</strong> {modalDetalle.Documento}</div>
+                        <div><strong>Nº Funcionario:</strong> {modalDetalle.NroFuncionario || '—'}</div>
+                        <div><strong>Primer nombre:</strong> {modalDetalle.PrimerNombre}</div>
+                        <div><strong>Segundo nombre:</strong> {modalDetalle.SegundoNombre || '—'}</div>
+                        <div><strong>Primer apellido:</strong> {modalDetalle.PrimerApellido}</div>
+                        <div><strong>Segundo apellido:</strong> {modalDetalle.SegundoApellido || '—'}</div>
+                        <div><strong>Fecha nacimiento:</strong> {modalDetalle.FechaNacimiento?.substring(0, 10) || '—'}</div>
+                        <div><strong>Estado civil:</strong> {modalDetalle.EstadoCivil || '—'}</div>
+                        <div><strong>Mail:</strong> {modalDetalle.Mail || '—'}</div>
+                        <div><strong>Celular:</strong> {modalDetalle.Celular || '—'}</div>
+                        <div><strong>Teléfono:</strong> {modalDetalle.Telefono || '—'}</div>
+                        <div><strong>Departamento:</strong> {modalDetalle.Departamento || '—'}</div>
+                        <div style={{ gridColumn: '1 / -1' }}><strong>Domicilio:</strong> {modalDetalle.Domicilio || '—'}</div>
+                        <div><strong>Cargo:</strong> {modalDetalle.Cargo || '—'}</div>
+                        <div><strong>Fecha ingreso:</strong> {modalDetalle.FechaIngreso?.substring(0, 10) || '—'}</div>
+                        <div><strong>Sector:</strong> {modalDetalle.Sector || '—'}</div>
+                        <div><strong>Turno:</strong> {modalDetalle.Turno || '—'}</div>
+                        <div><strong>Ubicación:</strong> {modalDetalle.UbicacionNombre || '—'}</div>
+                        <div><strong>Estado:</strong> {modalDetalle.Estado}</div>
+                        {modalDetalle.Observaciones && (
+                            <div style={{ gridColumn: '1 / -1' }}><strong>Observaciones:</strong> {modalDetalle.Observaciones}</div>
+                        )}
+                    </div>
+                )}
+            </Modal>
 
             <Modal isOpen={!!modalRechazar} onClose={() => setModalRechazar(null)}
                 title={`Rechazar solicitud — ${modalRechazar?.PrimerNombre} ${modalRechazar?.PrimerApellido}`}>

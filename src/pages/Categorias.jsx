@@ -71,17 +71,15 @@ export default function Categorias() {
                 <table className="tabla">
                     <thead>
                         <tr>
-                            <th>#</th>
                             <th>Nombre</th>
                             <th>Acciones</th>
                         </tr>
                     </thead>
                     <tbody>
                         {categorias.length === 0 ? (
-                            <tr><td colSpan={3}>No hay categorías</td></tr>
+                            <tr><td colSpan={2}>No hay categorías</td></tr>
                         ) : categorias.map(c => (
                             <tr key={c.Id}>
-                                <td>{c.Id}</td>
                                 <td>{c.Nombre}</td>
                                 <td>
                                     <button className="btn-sm" onClick={() => abrirEditar(c)}>Editar</button>

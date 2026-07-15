@@ -29,7 +29,7 @@ const descargar = (blob, nombre) => {
 };
 
 export default function Reportes() {
-  const [tab, setTab] = useState('afiliado');
+  const [tab, setTab] = useState('conciliacion');
 
   // Tab afiliado
   const [busqueda, setBusqueda] = useState('');
@@ -48,12 +48,17 @@ export default function Reportes() {
   const [loadingConc, setLoadingConc] = useState(false);
   const [errorConc, setErrorConc] = useState('');
   const [vistaConc, setVistaConc] = useState('todos');
+  const [fechaIngresoDesde, setFechaIngresoDesde] = useState('');
+  const [fechaIngresoHasta, setFechaIngresoHasta] = useState('');
+
 
   // Tab exportar
   const [mesExport, setMesExport] = useState('');
   const [anioExport, setAnioExport] = useState('');
   const [fechaDesdeExport, setFechaDesdeExport] = useState('');
   const [fechaHastaExport, setFechaHastaExport] = useState('');
+  const [fechaBajaDesde, setFechaBajaDesde] = useState('');
+  const [fechaBajaHasta, setFechaBajaHasta] = useState('');
 
   const anioActual = new Date().getFullYear();
   const anios = Array.from({ length: 5 }, (_, i) => anioActual - i);
@@ -131,14 +136,14 @@ export default function Reportes() {
 
   const handleExportarAfiliados = async () => {
     try {
-      const res = await exportarAfiliados();
+      const res = await exportarAfiliados(fechaIngresoDesde, fechaIngresoHasta);
       descargar(res.data, 'padron_afiliados.xlsx');
     } catch { alert('Error al exportar'); }
   };
 
   const handleExportarBajas = async () => {
     try {
-      const res = await exportarBajas();
+      const res = await exportarBajas(fechaBajaDesde, fechaBajaHasta);
       descargar(res.data, 'afiliados_bajas.xlsx');
     } catch { alert('Error al exportar'); }
   };
@@ -174,7 +179,6 @@ export default function Reportes() {
       {/* Pestañas */}
       <div style={{ display: 'flex', gap: 8, marginBottom: 24, borderBottom: '1px solid var(--border)' }}>
         {[
-          { id: 'afiliado', label: 'Por afiliado' },
           { id: 'conciliacion', label: 'Conciliación mensual' },
           { id: 'exportar', label: 'Exportar' },
         ].map(t => (
@@ -373,12 +377,36 @@ export default function Reportes() {
           <div style={{ background: 'var(--card-bg)', border: '1px solid var(--border)', borderRadius: 12, padding: 20 }}>
             <h3 style={{ margin: '0 0 6px', fontSize: 14, fontWeight: 600 }}>Padrón de afiliados</h3>
             <p style={{ margin: '0 0 12px', fontSize: 13, color: 'var(--text)' }}>Todos los afiliados activos con sus datos completos.</p>
+            <div style={{ display: 'flex', gap: 8, marginBottom: 12 }}>
+              <div className="form-group" style={{ margin: 0 }}>
+                <label>Ingreso desde</label>
+                <input type="date" className="form-control" value={fechaIngresoDesde}
+                  onChange={e => setFechaIngresoDesde(e.target.value)} />
+              </div>
+              <div className="form-group" style={{ margin: 0 }}>
+                <label>Ingreso hasta</label>
+                <input type="date" className="form-control" value={fechaIngresoHasta}
+                  onChange={e => setFechaIngresoHasta(e.target.value)} />
+              </div>
+            </div>
             <button className="btn-primary btn-inline" onClick={handleExportarAfiliados}>Exportar Excel</button>
           </div>
 
           <div style={{ background: 'var(--card-bg)', border: '1px solid var(--border)', borderRadius: 12, padding: 20 }}>
             <h3 style={{ margin: '0 0 6px', fontSize: 14, fontWeight: 600 }}>Afiliados dados de baja</h3>
             <p style={{ margin: '0 0 12px', fontSize: 13, color: 'var(--text)' }}>Listado de bajas con motivo y fecha.</p>
+            <div style={{ display: 'flex', gap: 8, marginBottom: 12 }}>
+              <div className="form-group" style={{ margin: 0 }}>
+                <label>Desde</label>
+                <input type="date" className="form-control" value={fechaBajaDesde}
+                  onChange={e => setFechaBajaDesde(e.target.value)} />
+              </div>
+              <div className="form-group" style={{ margin: 0 }}>
+                <label>Hasta</label>
+                <input type="date" className="form-control" value={fechaBajaHasta}
+                  onChange={e => setFechaBajaHasta(e.target.value)} />
+              </div>
+            </div>
             <button className="btn-primary btn-inline" onClick={handleExportarBajas}>Exportar Excel</button>
           </div>
 
