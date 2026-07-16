@@ -14,6 +14,11 @@ export default function Prestamos() {
   const [filtroEstado, setFiltroEstado] = useState('Activo');
   const [filtroAfiliado, setFiltroAfiliado] = useState('');
 
+  const [page, setPage] = useState(1);
+  const [total, setTotal] = useState(0);
+  const LIMIT = 20;
+  const totalPages = Math.ceil(total / LIMIT);
+
   // Modal detalle
   const [detalle, setDetalle] = useState(null);
   const [modalDetalleOpen, setModalDetalleOpen] = useState(false);
@@ -34,38 +39,38 @@ export default function Prestamos() {
 
   const [errorCrear, setErrorCrear] = useState('');
 
-  const cargar = async (filtros = {}) => {
+  const cargar = async (filtros = {}, p = 1) => {
     try {
-      const res = await getPrestamos(filtros);
+      const res = await getPrestamos({ ...filtros, page: p, limit: LIMIT });
       setPrestamos(res.data.data);
+      setTotal(res.data.total || 0);
     } finally {
       setLoading(false);
     }
   };
 
-const [searchParams] = useSearchParams();
+  const [searchParams] = useSearchParams();
 
-useEffect(() => {
-  const estadoUrl = searchParams.get('estado');
-  if (estadoUrl) {
-    setFiltroEstado(estadoUrl);
-    cargar({ estado: estadoUrl });
-  } else {
-    cargar({ estado: 'Activo' });
-  }
-}, []);
+  useEffect(() => {
+    const estadoUrl = searchParams.get('estado');
+    if (estadoUrl) {
+      setFiltroEstado(estadoUrl);
+      cargar({ estado: estadoUrl }, 1);
+    } else {
+      cargar({ estado: 'Activo' }, 1);
+    }
+  }, []);
 
   const aplicarFiltros = () => {
-    cargar({
-      estado: filtroEstado || undefined,
-      idAfiliado: filtroAfiliado || undefined,
-    });
+    setPage(1);
+    cargar({ estado: filtroEstado || undefined, idAfiliado: filtroAfiliado || undefined }, 1);
   };
 
   const limpiarFiltros = () => {
     setFiltroEstado('Activo');
     setFiltroAfiliado('');
-    cargar({ estado: 'Activo' });
+    setPage(1);
+    cargar({ estado: 'Activo' }, 1);
   };
 
   // Autocomplete afiliado
@@ -233,6 +238,14 @@ useEffect(() => {
             ))}
           </tbody>
         </table>
+      )}
+
+      {totalPages > 1 && (
+        <div className="pagination">
+          <span className="pagination-info">{total} préstamos — Página {page} de {totalPages}</span>
+          <button className="page-btn" onClick={() => { setPage(page - 1); cargar({ estado: filtroEstado || undefined, idAfiliado: filtroAfiliado || undefined }, page - 1); }} disabled={page === 1}>← Anterior</button>
+          <button className="page-btn" onClick={() => { setPage(page + 1); cargar({ estado: filtroEstado || undefined, idAfiliado: filtroAfiliado || undefined }, page + 1); }} disabled={page === totalPages}>Siguiente →</button>
+        </div>
       )}
 
       {/* Modal detalle */}

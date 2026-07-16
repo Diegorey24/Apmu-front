@@ -23,11 +23,16 @@ export default function Libros() {
   const [filtroTipo, setFiltroTipo] = useState('');
   const [filtroMateria, setFiltroMateria] = useState('');
   const [filtroBusqueda, setFiltroBusqueda] = useState('');
+  const [page, setPage] = useState(1);
+  const [total, setTotal] = useState(0);
+  const LIMIT = 20;
+  const totalPages = Math.ceil(total / LIMIT);
 
-  const cargar = async (filtros = {}) => {
+  const cargar = async (filtros = {}, p = 1) => {
     try {
-      const res = await getLibros(filtros);
+      const res = await getLibros({ ...filtros, page: p, limit: LIMIT });
       setLibros(res.data.data);
+      setTotal(res.data.total || 0);
     } finally {
       setLoading(false);
     }
@@ -40,29 +45,32 @@ export default function Libros() {
   }, []);
 
   const aplicarFiltros = () => {
+    setPage(1);
     cargar({
       tipo: filtroTipo || undefined,
       idMateria: filtroMateria || undefined,
       busqueda: filtroBusqueda || undefined,
-    });
+    }, 1);
   };
 
   const cambiarTipo = (tipo) => {
     setFiltroTipo(tipo);
     const idMateria = tipo === 'Estudio' ? filtroMateria : '';
     setFiltroMateria(idMateria);
+    setPage(1);
     cargar({
       tipo: tipo || undefined,
       idMateria: idMateria || undefined,
       busqueda: filtroBusqueda || undefined,
-    });
+    }, 1);
   };
 
   const limpiarFiltros = () => {
     setFiltroTipo('');
     setFiltroMateria('');
     setFiltroBusqueda('');
-    cargar();
+    setPage(1);
+    cargar({}, 1);
   };
 
   const setField = (field, value) => setForm(f => ({ ...f, [field]: value }));
@@ -102,7 +110,7 @@ export default function Libros() {
         await createLibro(form);
       }
       setModalOpen(false);
-      cargar({ tipo: filtroTipo || undefined, idMateria: filtroMateria || undefined, busqueda: filtroBusqueda || undefined });
+      cargar({ tipo: filtroTipo || undefined, idMateria: filtroMateria || undefined, busqueda: filtroBusqueda || undefined }, page);
     } catch (err) {
       setError(err.response?.data?.message || 'Error al guardar');
     }
@@ -176,29 +184,39 @@ export default function Libros() {
               <tr><td colSpan={9}>No hay libros</td></tr>
             ) : (
               libros.map(l => (
-              <tr key={l.Id} style={{ opacity: l.FechaBaja ? 0.5 : 1 }}>
-                <td>{l.Nombre}</td>
-                <td>{l.ISBN || '-'}</td>
-                <td>{l.Tipo}</td>
-                <td>{l.NombreEditorial || '-'}</td>
-                <td>{l.NombreMateria || '-'}</td>
-                <td>{l.Stock}</td>
-                <td>{l.Tipo === 'Estudio' && l.Costo ? `$ ${Number(l.Costo).toFixed(2)}` : '—'}</td>
-                <td>{l.FechaBaja ? 'Baja' : 'Activo'}</td>
-                <td>
-                  <button className="btn-sm" onClick={() => abrirEditar(l)}>Editar</button>
-                  <button
-                    className={`btn-sm ${l.FechaBaja ? '' : 'danger'}`}
-                    onClick={() => toggleBaja(l)}
-                  >
-                    {l.FechaBaja ? 'Reactivar' : 'Dar de baja'}
-                  </button>
-                </td>
-              </tr>
+                <tr key={l.Id} style={{ opacity: l.FechaBaja ? 0.5 : 1 }}>
+                  <td>{l.Nombre}</td>
+                  <td>{l.ISBN || '-'}</td>
+                  <td>{l.Tipo}</td>
+                  <td>{l.NombreEditorial || '-'}</td>
+                  <td>{l.NombreMateria || '-'}</td>
+                  <td>{l.Stock}</td>
+                  <td>{l.Tipo === 'Estudio' && l.Costo ? `$ ${Number(l.Costo).toFixed(2)}` : '—'}</td>
+                  <td>{l.FechaBaja ? 'Baja' : 'Activo'}</td>
+                  <td>
+                    <button className="btn-sm" onClick={() => abrirEditar(l)}>Editar</button>
+                    <button
+                      className={`btn-sm ${l.FechaBaja ? '' : 'danger'}`}
+                      onClick={() => toggleBaja(l)}
+                    >
+                      {l.FechaBaja ? 'Reactivar' : 'Dar de baja'}
+                    </button>
+                  </td>
+                </tr>
               ))
             )}
           </tbody>
         </table>
+
+
+      )}
+
+      {totalPages > 1 && (
+        <div className="pagination">
+          <span className="pagination-info">{total} libros — Página {page} de {totalPages}</span>
+          <button className="page-btn" onClick={() => { setPage(page - 1); cargar({ tipo: filtroTipo || undefined, idMateria: filtroMateria || undefined, busqueda: filtroBusqueda || undefined }, page - 1); }} disabled={page === 1}>← Anterior</button>
+          <button className="page-btn" onClick={() => { setPage(page + 1); cargar({ tipo: filtroTipo || undefined, idMateria: filtroMateria || undefined, busqueda: filtroBusqueda || undefined }, page + 1); }} disabled={page === totalPages}>Siguiente →</button>
+        </div>
       )}
 
       <Modal isOpen={modalOpen} onClose={() => setModalOpen(false)}

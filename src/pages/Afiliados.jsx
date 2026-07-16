@@ -157,11 +157,7 @@ function Afiliados() {
       setFormError('La fecha de nacimiento es obligatoria.');
       return;
     }
-    if (!form.Sexo) {
-      setFormError('El sexo es obligatorio.');
-      return;
-    }
-    if (form.Documento && !validate_ci(form.Documento)) {
+    if (modal.mode === 'create' && form.Documento && !validate_ci(form.Documento)) {
       setFormError('La cédula ingresada no es válida.');
       return;
     }
@@ -416,8 +412,8 @@ function Afiliados() {
                 <input id="Documento" name="Documento" value={form.Documento} onChange={handleChange} required />
               </div>
               <div className="form-group">
-                <label htmlFor="Sexo">Sexo *</label>
-                <select id="Sexo" name="Sexo" value={form.Sexo} onChange={handleChange} required>
+                <label htmlFor="Sexo">Sexo</label>
+                <select id="Sexo" name="Sexo" value={form.Sexo} onChange={handleChange}>
                   <option value="">—</option>
                   <option value="M">Masculino</option>
                   <option value="F">Femenino</option>
