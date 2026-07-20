@@ -253,9 +253,15 @@ export default function Prestamos() {
         title={detalle ? `Préstamo #${detalle.Id} — ${detalle.NombreAfiliado}` : ''}>
         {detalle && (
           <>
-            <p style={{ marginBottom: 12, color: 'var(--color-text-secondary)' }}>
-              Fecha: {formatFecha(detalle.FechaPrestamo)} &nbsp;|&nbsp; Estado: {estadoBadge(detalle.Estado)}
-            </p>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
+              <p style={{ color: 'var(--color-text-secondary)', margin: 0 }}>
+                Fecha: {formatFecha(detalle.FechaPrestamo)} &nbsp;|&nbsp; Estado: {estadoBadge(detalle.Estado)}
+              </p>
+              <button className="btn-sm" onClick={() => {
+                const token = localStorage.getItem('apmu_token');
+                window.open(`${import.meta.env.VITE_API_URL || ''}/prestamos/${detalle.Id}/pdf?token=${token}`, '_blank');
+              }}>Imprimir comprobante</button>
+            </div>
             <table className="tabla">
               <thead>
                 <tr>

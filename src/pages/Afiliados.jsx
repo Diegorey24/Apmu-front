@@ -337,7 +337,7 @@ function Afiliados() {
         <input
           className="search-input"
           type="search"
-          placeholder="Buscar por nombre, apellido o documento…"
+          placeholder="Buscar por nombre, apellido, documento o nº funcionario…"
           value={search}
           onChange={(e) => handleSearchChange(e.target.value)}
         />
@@ -351,6 +351,7 @@ function Afiliados() {
             <tr>
               <th>#</th>
               <th>Documento</th>
+              <th>Nº Func.</th>
               <th>Apellido y Nombre</th>
               <th>Celular</th>
               <th>Mail</th>
@@ -361,13 +362,14 @@ function Afiliados() {
           </thead>
           <tbody>
             {loading ? (
-              <tr><td colSpan={8} className="td-empty">Cargando…</td></tr>
+              <tr><td colSpan={9} className="td-empty">Cargando…</td></tr>
             ) : data.length === 0 ? (
-              <tr><td colSpan={8} className="td-empty">Sin resultados.</td></tr>
+              <tr><td colSpan={9} className="td-empty">Sin resultados.</td></tr>
             ) : data.map((a) => (
               <tr key={a.Id}>
                 <td className="td-muted">{a.Id}</td>
                 <td>{a.Documento}</td>
+                <td>{a.NroFuncionario || '—'}</td>
                 <td>{nombreCompleto(a)}</td>
                 <td>{a.Celular?.trim() || '—'}</td>
                 <td>{a.Mail || '—'}</td>

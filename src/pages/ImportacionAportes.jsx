@@ -61,7 +61,7 @@ export default function ImportacionAportes() {
                 <h1>Importación de aportes</h1>
             </div>
 
-            <div style={{ background: 'var(--card-bg)', border: '1px solid var(--border)', borderRadius: 12, padding: 24, maxWidth: 600 }}>
+            <div style={{ background: 'var(--card-bg)', border: '1px solid var(--border)', borderRadius: 12, padding: 24, maxWidth: 600, margin: '0 auto' }}>
                 <div className="form-grid">
                     <div className="form-group">
                         <label>Mes *</label>
@@ -86,9 +86,8 @@ export default function ImportacionAportes() {
                     </div>
                     <div className="form-group full">
                         <label>Archivo Excel *</label>
-                        <input type="file" accept=".xlsx,.xls,.csv"
-                            onChange={e => setArchivo(e.target.files[0])}
-                            style={{ padding: '8px 0' }} />
+                        <input type="file" accept=".xlsx,.xls,.csv" className="file-input"
+                            onChange={e => setArchivo(e.target.files[0])} />
                         <small style={{ color: 'var(--text)', fontSize: 12 }}>
                             El archivo debe tener las columnas: NroFuncionario, Nombre, Aporte
                         </small>
@@ -103,7 +102,7 @@ export default function ImportacionAportes() {
             </div>
 
             {resultado && (
-                <div style={{ marginTop: 24, maxWidth: 600 }}>
+                <div style={{ marginTop: 24, maxWidth: 600, margin: '24px auto 0' }}>
                     {/* Resumen */}
                     <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 16, marginBottom: 24 }}>
                         <div style={{ background: 'var(--card-bg)', border: '1px solid var(--border)', borderRadius: 12, padding: 20, textAlign: 'center' }}>
