@@ -7,56 +7,56 @@ const grupos = [
     id: 'socios',
     label: 'Gestión de socios',
     links: [
-      { to: '/dashboard/afiliados', label: 'Afiliados' },
-      { to: '/dashboard/categorias', label: 'Categorías' },
-      { to: '/dashboard/rubros', label: 'Rubros' },
-      { to: '/dashboard/ubicaciones', label: 'Ubicaciones' },
-      { to: '/dashboard/solicitudes-afiliacion', label: 'Solicitudes de afiliación' },
-      { to: '/dashboard/importacion-aportes', label: 'Importar aportes' },
+      { to: '/afiliados', label: 'Afiliados' },
+      { to: '/categorias', label: 'Categorías' },
+      { to: '/rubros', label: 'Rubros' },
+      { to: '/ubicaciones', label: 'Ubicaciones' },
+      { to: '/solicitudes-afiliacion', label: 'Solicitudes de afiliación' },
+      { to: '/importacion-aportes', label: 'Importar aportes' },
     ],
   },
   {
     id: 'biblioteca',
     label: 'Biblioteca',
     links: [
-      { to: '/dashboard/libros', label: 'Libros' },
-      { to: '/dashboard/editoriales', label: 'Editoriales' },
-      { to: '/dashboard/materias', label: 'Materias' },
-      { to: '/dashboard/prestamos', label: 'Préstamos' },
-      { to: '/dashboard/autores', label: 'Autores' },
-      { to: '/dashboard/solicitudes-prestamo', label: 'Solicitudes de préstamo' },
+      { to: '/libros', label: 'Libros' },
+      { to: '/editoriales', label: 'Editoriales' },
+      { to: '/materias', label: 'Materias' },
+      { to: '/prestamos', label: 'Préstamos' },
+      { to: '/autores', label: 'Autores' },
+      { to: '/solicitudes-prestamo', label: 'Solicitudes de préstamo' },
     ],
   },
   {
     id: 'finanzas',
     label: 'Finanzas',
     links: [
-      { to: '/dashboard/cuenta-corriente', label: 'Aportes' },
-      { to: '/dashboard/cajachica', label: 'Caja chica' },
-      { to: '/dashboard/creditos', label: 'Créditos Históricos CPMU' },
+      { to: '/cuenta-corriente', label: 'Aportes' },
+      { to: '/cajachica', label: 'Caja chica' },
+      { to: '/creditos', label: 'Créditos Históricos CPMU' },
     ],
   },
   {
     id: 'gremial',
     label: 'Gestión gremial',
     links: [
-      { to: '/dashboard/licencias-gremiales', label: 'Licencias gremiales' },
-      { to: '/dashboard/beneficios', label: 'Beneficios' },
+      { to: '/licencias-gremiales', label: 'Licencias gremiales' },
+      { to: '/beneficios', label: 'Beneficios' },
     ],
   },
   {
     id: 'reportes',
     label: 'Reportes',
     links: [
-      { to: '/dashboard/reportes', label: 'Reportes' },
+      { to: '/reportes', label: 'Reportes' },
     ],
   },
   {
     id: 'sistema',
     label: 'Sistema',
     links: [
-      { to: '/dashboard/solicitudes-acceso', label: 'Solicitudes de acceso' },
-      { to: '/dashboard/usuarios-web', label: 'Usuarios del sistema' },
+      { to: '/solicitudes-acceso', label: 'Solicitudes de acceso' },
+      { to: '/usuarios-web', label: 'Usuarios del sistema' },
     ],
   },
 ];
@@ -73,7 +73,7 @@ function Sidebar({ isOpen, onClose }) {
 
   const logout = () => {
     localStorage.removeItem('apmu_token');
-    navigate('/', { replace: true });
+    navigate('/login', { replace: true });
   };
 
   const handleNav = () => {
@@ -93,7 +93,7 @@ function Sidebar({ isOpen, onClose }) {
       </div>
 
       <nav className="sidebar-nav">
-        <NavLink to="/dashboard" end onClick={handleNav}>
+        <NavLink to="/" end onClick={handleNav}>
           Dashboard
         </NavLink>
 

@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { getAfiliados, createAfiliado, updateAfiliado, deleteAfiliado } from '../api/afiliados';
+import { getAfiliados, createAfiliado, updateAfiliado, deleteAfiliado, reactivarAfiliado } from '../api/afiliados';
 import { getMotivosBaja } from '../api/motivosbaja';
 import { getCuentaCorriente, createCargo } from '../api/cuentacorriente';
 import { getRubros } from '../api/rubros';
@@ -65,12 +65,13 @@ function Afiliados() {
   };
   const [formHijo, setFormHijo] = useState(EMPTY_HIJO);
   const [errorHijo, setErrorHijo] = useState('');
+  const [verInactivos, setVerInactivos] = useState(false);
 
-  const load = async (p, s) => {
+  const load = async (p, s, inactivos = verInactivos) => {
     setLoading(true);
     setPageError('');
     try {
-      const res = await getAfiliados(p, LIMIT, s);
+      const res = await getAfiliados(p, LIMIT, s, inactivos ? 0 : 1);
       setData(res.data.data || []);
       setTotal(res.data.total || 0);
     } catch {
@@ -341,6 +342,17 @@ function Afiliados() {
           value={search}
           onChange={(e) => handleSearchChange(e.target.value)}
         />
+        <button
+          className={`btn-sm ${verInactivos ? 'primary' : ''}`}
+          onClick={() => {
+            const nuevo = !verInactivos;
+            setVerInactivos(nuevo);
+            setPage(1);
+            load(1, search, nuevo);
+          }}
+        >
+          {verInactivos ? 'Ver activos' : 'Ver dados de baja'}
+        </button>
       </div>
 
       {pageError && <p className="alert alert-error">{pageError}</p>}
@@ -377,11 +389,23 @@ function Afiliados() {
                 <td>{a.NombreUbicacion || '—'}</td>
                 <td>
                   <div className="td-actions">
-                    <button className="btn-sm" onClick={() => openEdit(a)}>Editar</button>
-                    <button className="btn-sm danger" onClick={() => abrirModalBaja(a)}>Dar de baja</button>
-                    <button className="btn-sm" onClick={() => navigate(`/dashboard/cuenta-corriente?idAfiliado=${a.Id}`)}>
-                      Aportes
-                    </button>
+                    {!verInactivos ? (
+                      <>
+                        <button className="btn-sm" onClick={() => openEdit(a)}>Editar</button>
+                        <button className="btn-sm danger" onClick={() => abrirModalBaja(a)}>Dar de baja</button>
+                        <button className="btn-sm" onClick={() => navigate(`/cuenta-corriente?idAfiliado=${a.Id}`)}>Aportes</button>
+                      </>
+                    ) : (
+                      <button className="btn-sm" onClick={async () => {
+                        if (!confirm(`¿Reactivar a ${nombreCompleto(a)}?`)) return;
+                        try {
+                          await reactivarAfiliado(a.Id);
+                          load(page, search);
+                        } catch (err) {
+                          alert(err.response?.data?.message || 'Error al reactivar');
+                        }
+                      }}>Reactivar</button>
+                    )}
                   </div>
                 </td>
               </tr>
@@ -587,7 +611,7 @@ function Afiliados() {
                     }}>+ Nuevo cargo</button>
                     <button type="button" className="btn-sm" onClick={() => {
                       closeModal();
-                      navigate(`/dashboard/cuenta-corriente?idAfiliado=${modal.record.Id}`);
+                      navigate(`/cuenta-corriente?idAfiliado=${modal.record.Id}`)
                     }}>Ver todos</button>
                   </div>
                 </div>

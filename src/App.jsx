@@ -31,15 +31,15 @@ function App() {
   return (
     <HashRouter>
       <Routes>
-        <Route path="/" element={<Login />} />
+        <Route path="/login" element={<Login />} />
 
-        {/* Portal del socio*/}
+        {/* Portal del socio */}
         <Route path="/portal/login" element={<PortalLogin />} />
         <Route path="/portal" element={<PortalHome />} />
         <Route path="/solicitud-afiliacion" element={<SolicitudAfiliacion />} />
 
         <Route
-          path="/dashboard"
+          path="/"
           element={
             <ProtectedRoute>
               <DashboardLayout />
@@ -69,7 +69,7 @@ function App() {
           <Route path="solicitudes-prestamo" element={<GestionSolicitudesPrestamo />} />
         </Route>
 
-        <Route path="*" element={<Navigate to="/" replace />} />
+        <Route path="*" element={<Navigate to="/login" replace />} />
       </Routes>
     </HashRouter>
   );

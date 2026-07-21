@@ -11,7 +11,7 @@ function Login() {
   const navigate = useNavigate();
 
   useEffect(() => {
-    if (localStorage.getItem('apmu_token')) navigate('/dashboard', { replace: true });
+    if (localStorage.getItem('apmu_token')) navigate('/', { replace: true });
   }, [navigate]);
 
   const handleSubmit = async (e) => {
@@ -22,7 +22,7 @@ function Login() {
       const response = await login(username, password);
       const token = response.data.data.access_token;
       localStorage.setItem('apmu_token', token);
-      navigate('/dashboard', { replace: true });
+      navigate('/', { replace: true });
     } catch (err) {
       setError(err.response?.data?.message || 'Usuario o contraseña incorrectos.');
     } finally {

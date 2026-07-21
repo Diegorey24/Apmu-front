@@ -325,7 +325,7 @@ export default function Prestamos() {
                 >
                   <strong>{a.PrimerNombre} {a.PrimerApellido} {a.SegundoApellido}</strong>
                   <span style={{ marginLeft: 8, color: 'var(--text)', fontSize: 13 }}>
-                    {a.Documento}
+                    {a.Documento} {a.NroFuncionario ? `· Func. ${a.NroFuncionario}` : ''}
                   </span>
                 </div>
               ))}

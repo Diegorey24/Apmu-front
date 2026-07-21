@@ -77,7 +77,11 @@ export default function SolicitudAfiliacion() {
                 maxWidth: 480, width: '100%', textAlign: 'center',
                 border: '1px solid var(--border)'
             }}>
-                <p style={{ fontSize: 48, marginBottom: 16 }}>✓</p>
+                <div style={{
+                    width: 64, height: 64, borderRadius: '50%', background: '#16a34a',
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    margin: '0 auto 16px', color: '#fff', fontSize: 32
+                }}>✓</div>
                 <h2 style={{ marginBottom: 12 }}>Solicitud enviada</h2>
                 <p style={{ color: 'var(--text)' }}>
                     Tu solicitud fue recibida. La directiva de APMU la revisará y te notificará cuando sea procesada.
@@ -90,6 +94,7 @@ export default function SolicitudAfiliacion() {
         <div style={{ minHeight: '100vh', background: 'var(--bg)', padding: '32px 16px' }}>
             <div style={{ maxWidth: 720, margin: '0 auto' }}>
                 <div style={{ textAlign: 'center', marginBottom: 32 }}>
+                    <img src="/apmu/apmu-5.jpg" alt="APMU" style={{ width: 80, borderRadius: 12, marginBottom: 16 }} />
                     <h1 style={{ fontSize: 24, fontWeight: 600 }}>Solicitud de afiliación</h1>
                     <p style={{ color: 'var(--text)', marginTop: 8 }}>
                         Asociación del Personal de Médica Uruguaya — APMU
@@ -232,6 +237,9 @@ export default function SolicitudAfiliacion() {
                         </div>
                     </form>
                 </div>
+            </div>
+            <div style={{ textAlign: 'center', padding: '24px 0', marginTop: 32 }}>
+                <img src="/apmu/Macrosoft.png" alt="Macrosoft" style={{ height: 24, opacity: 0.6 }} />
             </div>
         </div>
     );

@@ -8,3 +8,4 @@ export const updateAfiliado = (id, data) => client.put(`/afiliado/${id}`, data);
 export const deleteAfiliado = (id, idMotivo, observaciones) =>
   client.delete(`/afiliado/${id}`, { data: { idMotivo, observaciones } });
 export const searchAfiliados = (q) => client.get('/afiliados/search', { params: { q } });
+export const reactivarAfiliado = (id) => client.patch(`/afiliados/${id}/reactivar`);

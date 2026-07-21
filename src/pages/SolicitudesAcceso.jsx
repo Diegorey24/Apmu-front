@@ -16,6 +16,8 @@ export default function SolicitudesAcceso() {
   const [tab, setTab] = useState('pendientes');
   const [usuarios, setUsuarios] = useState([]);
   const [loadingUsuarios, setLoadingUsuarios] = useState(false);
+  const [msgExito, setMsgExito] = useState('');
+  const [busquedaUsuarios, setBusquedaUsuarios] = useState('');
 
   const cargar = async () => {
     setLoading(true);
@@ -86,7 +88,11 @@ export default function SolicitudesAcceso() {
     try {
       await resetPasswordPortal(modalReset.Id, nuevaPassword);
       setModalReset(null);
-      alert('Contraseña reseteada correctamente');
+      setNuevaPassword('');
+      cargar();
+      cargarUsuarios();
+      setMsgExito('Contraseña reseteada correctamente');
+      setTimeout(() => setMsgExito(''), 3000);
     } catch (err) {
       setResetError(err.response?.data?.message || 'Error al resetear');
     }
@@ -109,6 +115,16 @@ export default function SolicitudesAcceso() {
         <h1>Solicitudes de acceso</h1>
         <button className="btn-primary btn-inline" onClick={() => { setFormCrear({ documento: '', password: '' }); setErrorCrear(''); setModalCrear(true); }}>+ Crear usuario</button>
       </div>
+
+      {msgExito && (
+        <div style={{
+          background: 'rgba(22,163,74,0.08)', color: '#16a34a',
+          border: '1px solid rgba(22,163,74,0.2)', borderRadius: 8,
+          padding: '10px 14px', fontSize: 13, marginBottom: 16, fontWeight: 500
+        }}>
+          {msgExito}
+        </div>
+      )}
 
       <div style={{ display: 'flex', gap: 0, marginBottom: 20, borderBottom: '2px solid var(--border)' }}>
         <button
@@ -197,6 +213,15 @@ export default function SolicitudesAcceso() {
 
       {tab === 'todos' && (
         <>
+          <div className="toolbar" style={{ marginBottom: 16 }}>
+            <input
+              className="search-input"
+              type="search"
+              placeholder="Buscar por documento, nombre o email…"
+              value={busquedaUsuarios}
+              onChange={e => setBusquedaUsuarios(e.target.value)}
+            />
+          </div>
           {loadingUsuarios ? <p>Cargando...</p> : usuarios.length === 0 ? (
             <p style={{ textAlign: 'center', padding: '48px 0', color: 'var(--text)' }}>No hay usuarios registrados.</p>
           ) : (
@@ -213,7 +238,14 @@ export default function SolicitudesAcceso() {
                   </tr>
                 </thead>
                 <tbody>
-                  {usuarios.map(u => (
+                  {usuarios.filter(u => {
+                    if (!busquedaUsuarios) return true;
+                    const q = busquedaUsuarios.toLowerCase();
+                    return (u.Documento || '').toLowerCase().includes(q) ||
+                      (u.PrimerNombre || '').toLowerCase().includes(q) ||
+                      (u.PrimerApellido || '').toLowerCase().includes(q) ||
+                      (u.Email || '').toLowerCase().includes(q);
+                  }).map(u => (
                     <tr key={u.Id}>
                       <td>{u.Documento}</td>
                       <td>{u.PrimerNombre ? `${u.PrimerNombre} ${u.PrimerApellido}` : '—'}</td>

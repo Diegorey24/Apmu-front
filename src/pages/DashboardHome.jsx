@@ -12,23 +12,23 @@ import Modal from '../components/Modal';
 import { formatFecha } from '../utils/fecha';
 
 function DashboardHome() {
-  const [stats, setStats]     = useState(null);
+  const [stats, setStats] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [error, setError]     = useState('');
+  const [error, setError] = useState('');
   const navigate = useNavigate();
 
-  const meses = ['Enero','Febrero','Marzo','Abril','Mayo','Junio',
-                 'Julio','Agosto','Setiembre','Octubre','Noviembre','Diciembre'];
+  const meses = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio',
+    'Julio', 'Agosto', 'Setiembre', 'Octubre', 'Noviembre', 'Diciembre'];
   const ahora = new Date();
   const periodoActual = `${meses[ahora.getMonth()]} ${ahora.getFullYear()}`;
   const aniomesActual = parseInt(`${ahora.getFullYear()}${String(ahora.getMonth() + 1).padStart(2, '0')}`);
 
   const [graficos, setGraficos] = useState(null);
 
-  const [modal, setModal]               = useState(null);
-  const [modalData, setModalData]       = useState([]);
+  const [modal, setModal] = useState(null);
+  const [modalData, setModalData] = useState([]);
   const [modalLoading, setModalLoading] = useState(false);
-  const [modalError, setModalError]     = useState('');
+  const [modalError, setModalError] = useState('');
 
   useEffect(() => {
     client.get('/dashboard/stats')
@@ -48,13 +48,13 @@ function DashboardHome() {
         estados: est.data.data,
         libros: lib.data.data,
       });
-    }).catch(() => {});
+    }).catch(() => { });
   }, []);
 
   if (loading) return <div className="page"><p>Cargando…</p></div>;
-  if (error)   return <div className="page"><p className="alert alert-error">{error}</p></div>;
+  if (error) return <div className="page"><p className="alert alert-error">{error}</p></div>;
 
-  const mesesCortos = ['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Set','Oct','Nov','Dic'];
+  const mesesCortos = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Set', 'Oct', 'Nov', 'Dic'];
   const formatPeriodo = (aniomes) => {
     if (!aniomes) return '—';
     const s = String(aniomes);
@@ -154,7 +154,7 @@ function DashboardHome() {
       </p>
 
       <Section title="Afiliados">
-        <Card label="Afiliados activos" value={stats.TotalAfiliados} onClick={() => navigate('/dashboard/afiliados')} />
+        <Card label="Afiliados activos" value={stats.TotalAfiliados} onClick={() => navigate('/afiliados')} />
         <Card label="Afiliados dados de baja" value={stats.AfiliadosBaja} onClick={openAfiliadosBajaModal} />
       </Section>
 
@@ -168,12 +168,12 @@ function DashboardHome() {
       </Section>
 
       <Section title="Biblioteca">
-        <Card label="Total de libros" value={stats.TotalLibros} onClick={() => navigate('/dashboard/libros')} />
+        <Card label="Total de libros" value={stats.TotalLibros} onClick={() => navigate('/libros')} />
         <Card label="Libros con stock bajo" value={stats.LibrosStockBajo} onClick={openLibrosStockBajoModal} />
         <Card label="Préstamos activos" value={stats.PrestamosActivos}
-          onClick={() => navigate('/dashboard/prestamos?estado=Activo')} />
+          onClick={() => navigate('/prestamos?estado=Activo')} />
         <Card label="Préstamos vencidos" value={stats.PrestamosVencidos}
-          onClick={() => navigate('/dashboard/prestamos?estado=Vencido')} />
+          onClick={() => navigate('/prestamos?estado=Vencido')} />
         <Card
           label="Vencen en los próximos 7 días"
           value={stats.PrestamosProximosVencer}
@@ -407,7 +407,7 @@ function DashboardHome() {
           </div>
           <div className="modal-footer">
             <button type="button" className="btn-sm btn-cancel" onClick={closeModal}>Cerrar</button>
-            <button type="button" className="btn-primary btn-inline" onClick={() => navigate('/dashboard/prestamos')}>
+            <button type="button" className="btn-primary btn-inline" onClick={() => navigate('/prestamos')}>
               Ver préstamos
             </button>
           </div>
@@ -447,7 +447,7 @@ function DashboardHome() {
 
           <div className="modal-footer">
             <button type="button" className="btn-sm btn-cancel" onClick={closeModal}>Cerrar</button>
-            <button type="button" className="btn-primary btn-inline" onClick={() => navigate('/dashboard/libros')}>
+            <button type="button" className="btn-primary btn-inline" onClick={() => navigate('/libros')}>
               Ver en Biblioteca
             </button>
           </div>
