@@ -98,6 +98,29 @@ h2 {
   min-height: 72px;
 }
 
+.form-control {
+  width: 100%;
+  padding: 9px 12px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--bg);
+  color: var(--text-h);
+  font-size: 14px;
+  font-family: var(--sans);
+  outline: none;
+  transition: border-color 0.2s;
+}
+
+.form-control:focus {
+  border-color: var(--accent);
+}
+
+.form-control:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+  background: var(--border);
+}
+
 .file-input {
   width: 100%;
   padding: 6px;
@@ -789,5 +812,44 @@ tbody tr:hover {
   /* Login */
   .login-card {
     padding: 28px 20px;
+  }
+}
+
+/* ── Impresión ── */
+@media print {
+  .topbar,
+  .sidebar,
+  .sidebar-overlay,
+  .no-print {
+    display: none !important;
+  }
+
+  .layout,
+  .layout-main,
+  .sidebar ~ .layout-main,
+  .page {
+    display: block !important;
+    height: auto !important;
+    min-height: 0 !important;
+    overflow: visible !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    max-width: none !important;
+  }
+
+  body :not(.print-area):not(.print-area *) {
+    visibility: hidden;
+  }
+
+  .print-area {
+    visibility: visible;
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+  }
+
+  .print-area * {
+    visibility: visible;
   }
 }

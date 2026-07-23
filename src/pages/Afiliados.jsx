@@ -9,6 +9,7 @@ import { validate_ci, validate_mail, validate_celular } from '../utils/validacio
 import { getCategorias } from '../api/categorias';
 import { getUbicaciones } from '../api/ubicaciones';
 import { getHijos, createHijo, updateHijo, validarHijo, deleteHijo } from '../api/hijos';
+import { getConfiguracion, updateConfiguracion } from '../api/configuracion';
 
 
 const LIMIT = 20;
@@ -62,10 +63,17 @@ function Afiliados() {
   const EMPTY_HIJO = {
     primerNombre: '', segundoNombre: '', primerApellido: '', segundoApellido: '',
     documento: '', fechaNacimiento: '', cedulaPadre: '', cedulaMadre: '',
+    discapacidad: false, patologia: '',
   };
   const [formHijo, setFormHijo] = useState(EMPTY_HIJO);
   const [errorHijo, setErrorHijo] = useState('');
   const [verInactivos, setVerInactivos] = useState(false);
+
+  // Configuración: fecha de corte para edad de hijos
+  const [modalCorteOpen, setModalCorteOpen] = useState(false);
+  const [fechaCorte, setFechaCorte] = useState('');
+  const [savingCorte, setSavingCorte] = useState(false);
+  const [errorCorte, setErrorCorte] = useState('');
 
   const load = async (p, s, inactivos = verInactivos) => {
     setLoading(true);
@@ -249,9 +257,39 @@ function Afiliados() {
       fechaNacimiento: toDateInput(hijo.FechaNacimiento),
       cedulaPadre: hijo.CedulaPadre || '',
       cedulaMadre: hijo.CedulaMadre || '',
+      discapacidad: !!hijo.Discapacidad,
+      patologia: hijo.Patologia || '',
     });
     setErrorHijo('');
     setModalHijo(hijo);
+  };
+
+  const abrirConfigCorte = async () => {
+    setErrorCorte('');
+    try {
+      const res = await getConfiguracion();
+      const config = res.data.data.find(c => c.Clave === 'FechaCorteHijos');
+      setFechaCorte(config?.Valor || '');
+    } catch {
+      setErrorCorte('Error al cargar la configuración');
+    }
+    setModalCorteOpen(true);
+  };
+
+  const guardarConfigCorte = async () => {
+    if (!/^\d{2}-\d{2}$/.test(fechaCorte)) {
+      setErrorCorte('El formato debe ser MM-DD (ej: 04-30)');
+      return;
+    }
+    setSavingCorte(true);
+    try {
+      await updateConfiguracion('FechaCorteHijos', fechaCorte);
+      setModalCorteOpen(false);
+    } catch (err) {
+      setErrorCorte(err.response?.data?.message || 'Error al guardar');
+    } finally {
+      setSavingCorte(false);
+    }
   };
 
   const guardarHijo = async () => {
@@ -650,7 +688,8 @@ function Afiliados() {
               </div>
               <p className="section-title">Hijos</p>
               <div className="form-group full">
-                <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: 8 }}>
+                <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 8, marginBottom: 8 }}>
+                  <button type="button" className="btn-sm" onClick={abrirConfigCorte}>Configurar fecha de corte</button>
                   <button type="button" className="btn-sm" onClick={abrirCrearHijo}>+ Agregar hijo</button>
                 </div>
                 {hijos.length === 0 ? (
@@ -662,6 +701,8 @@ function Afiliados() {
                         <th>Nombre</th>
                         <th>Documento</th>
                         <th>Nacimiento</th>
+                        <th>Edad</th>
+                        <th>Discapacidad</th>
                         <th>Validado</th>
                         <th></th>
                       </tr>
@@ -672,6 +713,8 @@ function Afiliados() {
                           <td>{h.PrimerNombre} {h.PrimerApellido}</td>
                           <td>{h.Documento || '—'}</td>
                           <td>{h.FechaNacimiento ? h.FechaNacimiento.substring(0, 10) : '—'}</td>
+                          <td>{h.EdadAlCorte ?? '—'}</td>
+                          <td title={h.Patologia || ''}>{h.Discapacidad ? 'Sí' : 'No'}</td>
                           <td>
                             <span style={{ color: h.Validado ? 'var(--accent)' : 'var(--text)', fontWeight: 500 }}>
                               {h.Validado ? '✓ Sí' : '✗ No'}
@@ -852,6 +895,20 @@ function Afiliados() {
                 <input className="form-control" value={formHijo.cedulaMadre}
                   onChange={e => setFormHijo(f => ({ ...f, cedulaMadre: e.target.value }))} />
               </div>
+              <div className="form-group">
+                <label>Discapacidad</label>
+                <select className="form-control" value={formHijo.discapacidad ? '1' : '0'}
+                  onChange={e => setFormHijo(f => ({ ...f, discapacidad: e.target.value === '1' }))}>
+                  <option value="0">No</option>
+                  <option value="1">Sí</option>
+                </select>
+              </div>
+              <div className="form-group full">
+                <label>Patología</label>
+                <input className="form-control" value={formHijo.patologia}
+                  onChange={e => setFormHijo(f => ({ ...f, patologia: e.target.value }))}
+                  placeholder="Opcional..." />
+              </div>
             </div>
             {errorHijo && <span className="error" style={{ display: 'block', marginTop: 8 }}>{errorHijo}</span>}
             <div className="modal-actions">
@@ -860,6 +917,23 @@ function Afiliados() {
             </div>
           </>
         )}
+      </Modal>
+
+      <Modal isOpen={modalCorteOpen} onClose={() => setModalCorteOpen(false)}
+        title="Fecha de corte para edad de hijos">
+        <div className="form-group">
+          <label>Fecha de corte (MM-DD)</label>
+          <input className="form-control" value={fechaCorte}
+            onChange={e => setFechaCorte(e.target.value)}
+            placeholder="Ej: 04-30" autoFocus />
+        </div>
+        {errorCorte && <span className="error" style={{ display: 'block', marginBottom: 8 }}>{errorCorte}</span>}
+        <div className="modal-actions">
+          <button className="btn-sm" onClick={() => setModalCorteOpen(false)}>Cancelar</button>
+          <button className="btn-primary btn-inline" onClick={guardarConfigCorte} disabled={savingCorte}>
+            {savingCorte ? 'Guardando...' : 'Guardar'}
+          </button>
+        </div>
       </Modal>
 
     </div>

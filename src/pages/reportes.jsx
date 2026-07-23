@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect } from 'react';
 import { searchAfiliados } from '../api/afiliados';
 import { getRubros } from '../api/rubros';
-import { getDeudaAfiliado, getConciliacion, exportarAfiliados, exportarBajas, exportarAportes, exportarPrestamos, exportarLicencias } from '../api/reportes';
+import { getDeudaAfiliado, getConciliacion, exportarAfiliados, exportarBajas, exportarAportes, exportarPrestamos, exportarLicencias, exportarDeudoresLibros, exportarListadoLibros } from '../api/reportes';
 import { formatFecha } from '../utils/fecha';
 
 const meses = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Set', 'Oct', 'Nov', 'Dic'];
@@ -59,6 +59,10 @@ export default function Reportes() {
   const [fechaHastaExport, setFechaHastaExport] = useState('');
   const [fechaBajaDesde, setFechaBajaDesde] = useState('');
   const [fechaBajaHasta, setFechaBajaHasta] = useState('');
+  const [fechaDeudoresDesde, setFechaDeudoresDesde] = useState('');
+  const [fechaDeudoresHasta, setFechaDeudoresHasta] = useState('');
+  const [fechaLibrosDesde, setFechaLibrosDesde] = useState('');
+  const [fechaLibrosHasta, setFechaLibrosHasta] = useState('');
 
   const anioActual = new Date().getFullYear();
   const anios = Array.from({ length: 5 }, (_, i) => anioActual - i);
@@ -167,6 +171,20 @@ export default function Reportes() {
     try {
       const res = await exportarLicencias(fechaDesdeExport, fechaHastaExport);
       descargar(res.data, 'licencias_gremiales.xlsx');
+    } catch { alert('Error al exportar'); }
+  };
+
+  const handleExportarDeudoresLibros = async () => {
+    try {
+      const res = await exportarDeudoresLibros(fechaDeudoresDesde, fechaDeudoresHasta);
+      descargar(res.data, 'deudores_libros.xlsx');
+    } catch { alert('Error al exportar'); }
+  };
+
+  const handleExportarListadoLibros = async () => {
+    try {
+      const res = await exportarListadoLibros(fechaLibrosDesde, fechaLibrosHasta);
+      descargar(res.data, 'listado_libros.xlsx');
     } catch { alert('Error al exportar'); }
   };
 
@@ -454,6 +472,42 @@ export default function Reportes() {
               </div>
             </div>
             <button className="btn-primary btn-inline" onClick={handleExportarLicencias}>Exportar Excel</button>
+          </div>
+
+          <div style={{ background: 'var(--card-bg)', border: '1px solid var(--border)', borderRadius: 12, padding: 20 }}>
+            <h3 style={{ margin: '0 0 6px', fontSize: 14, fontWeight: 600 }}>Deudores de libros</h3>
+            <p style={{ margin: '0 0 12px', fontSize: 13, color: 'var(--text)' }}>Préstamos vencidos sin devolver, con datos de contacto del afiliado. Filtrá por vencimiento o exportá todos.</p>
+            <div style={{ display: 'flex', gap: 8, marginBottom: 12 }}>
+              <div className="form-group" style={{ margin: 0 }}>
+                <label>Vencido desde</label>
+                <input type="date" className="form-control" value={fechaDeudoresDesde}
+                  onChange={e => setFechaDeudoresDesde(e.target.value)} />
+              </div>
+              <div className="form-group" style={{ margin: 0 }}>
+                <label>Vencido hasta</label>
+                <input type="date" className="form-control" value={fechaDeudoresHasta}
+                  onChange={e => setFechaDeudoresHasta(e.target.value)} />
+              </div>
+            </div>
+            <button className="btn-primary btn-inline" onClick={handleExportarDeudoresLibros}>Exportar Excel</button>
+          </div>
+
+          <div style={{ background: 'var(--card-bg)', border: '1px solid var(--border)', borderRadius: 12, padding: 20 }}>
+            <h3 style={{ margin: '0 0 6px', fontSize: 14, fontWeight: 600 }}>Listado de libros</h3>
+            <p style={{ margin: '0 0 12px', fontSize: 13, color: 'var(--text)' }}>Inventario completo con autor, grado, editorial y materia. Filtrá por alta o exportá todos.</p>
+            <div style={{ display: 'flex', gap: 8, marginBottom: 12 }}>
+              <div className="form-group" style={{ margin: 0 }}>
+                <label>Alta desde</label>
+                <input type="date" className="form-control" value={fechaLibrosDesde}
+                  onChange={e => setFechaLibrosDesde(e.target.value)} />
+              </div>
+              <div className="form-group" style={{ margin: 0 }}>
+                <label>Alta hasta</label>
+                <input type="date" className="form-control" value={fechaLibrosHasta}
+                  onChange={e => setFechaLibrosHasta(e.target.value)} />
+              </div>
+            </div>
+            <button className="btn-primary btn-inline" onClick={handleExportarListadoLibros}>Exportar Excel</button>
           </div>
 
         </div>

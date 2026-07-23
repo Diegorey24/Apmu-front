@@ -125,7 +125,7 @@ export default function Beneficios() {
                 </div>
             )}
 
-            <div className="toolbar">
+            <div className="toolbar" style={{ flexWrap: 'wrap', alignItems: 'flex-end' }}>
                 <div className="form-group" style={{ margin: 0 }}>
                     <label>Tipo</label>
                     <select className="form-control" value={filtroTipo}

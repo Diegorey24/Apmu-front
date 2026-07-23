@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
+import * as XLSX from 'xlsx';
 import { getLicencias, createLicencia, updateLicencia, deleteLicencia } from '../api/licenciasgremiales';
 import { searchAfiliados } from '../api/afiliados';
 import Modal from '../components/Modal';
@@ -51,6 +52,28 @@ export default function LicenciasGremiales() {
         cargar();
     };
 
+    const exportarExcel = () => {
+        const filas = licencias.map(l => ({
+            Afiliado: l.NombreAfiliado,
+            'Nº Funcionario': l.NroFuncionario || '',
+            'Cargo/Sector': [l.Cargo, l.Sector].filter(Boolean).join(' / '),
+            Horario: l.Horario || '',
+            Fecha: l.FechaLicencia?.substring(0, 10) || '',
+            'Solicitada por': l.SolicitadaPor || '',
+            'Pedida por': l.PedidaPor || '',
+            Convocatoria: l.Convocatoria || '',
+            Comisión: l.Comision || '',
+        }));
+        const hoja = XLSX.utils.json_to_sheet(filas);
+        const libro = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(libro, hoja, 'Licencias gremiales');
+        XLSX.writeFile(libro, 'licencias_gremiales.xlsx');
+    };
+
+    const imprimir = () => {
+        window.print();
+    };
+
     const onBusquedaAfiliado = (valor) => {
         setBusquedaAfiliado(valor);
         setAfiliadoSeleccionado(null);
@@ -92,7 +115,7 @@ export default function LicenciasGremiales() {
             comision: lic.Comision || '',
         });
         setBusquedaAfiliado(`${lic.NombreAfiliado} — ${lic.Documento}`);
-        setAfiliadoSeleccionado({ Id: lic.IdAfiliado });
+        setAfiliadoSeleccionado({ Id: lic.IdAfiliado, NroFuncionario: lic.NroFuncionario, Cargo: lic.Cargo });
         setSugerencias([]);
         setError('');
         setModalOpen(true);
@@ -131,7 +154,7 @@ export default function LicenciasGremiales() {
                 <button className="btn-primary btn-inline" onClick={abrirCrear}>+ Nueva licencia</button>
             </div>
 
-            <div className="toolbar">
+            <div className="toolbar" style={{ flexWrap: 'wrap', alignItems: 'flex-end' }}>
                 <div className="form-group" style={{ margin: 0 }}>
                     <label>Desde</label>
                     <input type="date" className="form-control" value={filtroFechaDesde}
@@ -144,10 +167,12 @@ export default function LicenciasGremiales() {
                 </div>
                 <button className="btn-primary btn-inline" onClick={aplicarFiltros}>Buscar</button>
                 <button className="btn-sm" onClick={limpiarFiltros}>Limpiar</button>
+                <button className="btn-sm no-print" onClick={exportarExcel}>Exportar Excel</button>
+                <button className="btn-sm no-print" onClick={imprimir}>Imprimir</button>
             </div>
 
             {loading ? <p>Cargando...</p> : (
-                <table className="tabla">
+                <table className="tabla print-area">
                     <thead>
                         <tr>
                             <th>Afiliado</th>
@@ -158,7 +183,7 @@ export default function LicenciasGremiales() {
                             <th>Solicitada por</th>
                             <th>Pedida por</th>
                             <th>Convocatoria</th>
-                            <th>Acciones</th>
+                            <th className="no-print">Acciones</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -174,7 +199,7 @@ export default function LicenciasGremiales() {
                                 <td>{l.SolicitadaPor || '—'}</td>
                                 <td>{l.PedidaPor || '—'}</td>
                                 <td>{l.Convocatoria || '—'}</td>
-                                <td>
+                                <td className="no-print">
                                     <button className="btn-sm" onClick={() => abrirEditar(l)}>Editar</button>
                                     <button className="btn-sm danger" onClick={() => eliminar(l)}>Eliminar</button>
                                 </td>
@@ -208,6 +233,13 @@ export default function LicenciasGremiales() {
                                     <span style={{ marginLeft: 8, color: 'var(--text)', fontSize: 13 }}>{a.Documento}</span>
                                 </div>
                             ))}
+                        </div>
+                    )}
+                    {afiliadoSeleccionado && (
+                        <div style={{ marginTop: 6, fontSize: 13, color: 'var(--text)' }}>
+                            Nº Funcionario: <strong>{afiliadoSeleccionado.NroFuncionario || '—'}</strong>
+                            {' · '}
+                            Cargo: <strong>{afiliadoSeleccionado.Cargo || '—'}</strong>
                         </div>
                     )}
                 </div>

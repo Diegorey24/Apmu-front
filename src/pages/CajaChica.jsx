@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import * as XLSX from 'xlsx';
 import { getCajaChica, createMovimiento, updateMovimiento, deleteMovimiento } from '../api/cajachica';
 import Modal from '../components/Modal';
 import { formatFecha } from '../utils/fecha';
@@ -16,11 +17,15 @@ function CajaChica() {
   const [formError, setFormError] = useState('');
   const [saving, setSaving] = useState(false);
 
-  const load = async () => {
+  // Filtros
+  const [filtroFechaDesde, setFiltroFechaDesde] = useState('');
+  const [filtroFechaHasta, setFiltroFechaHasta] = useState('');
+
+  const load = async (filtros = {}) => {
     setLoading(true);
     setPageError('');
     try {
-      const res = await getCajaChica();
+      const res = await getCajaChica(filtros);
       setData(res.data.data || []);
       setResumen(res.data.resumen || null);
     } catch {
@@ -31,6 +36,38 @@ function CajaChica() {
   };
 
   useEffect(() => { load(); }, []);
+
+  const aplicarFiltros = () => {
+    load({
+      fechaDesde: filtroFechaDesde || undefined,
+      fechaHasta: filtroFechaHasta || undefined,
+    });
+  };
+
+  const limpiarFiltros = () => {
+    setFiltroFechaDesde('');
+    setFiltroFechaHasta('');
+    load();
+  };
+
+  const exportarExcel = () => {
+    const filas = data.map(row => ({
+      Fecha: row.Fecha ? row.Fecha.substring(0, 10) : '',
+      Tipo: row.Tipo,
+      Descripcion: row.Descripcion,
+      Importe: row.Importe,
+      Usuario: row.Usuario || '',
+      SaldoAcumulado: row.SaldoAcumulado,
+    }));
+    const hoja = XLSX.utils.json_to_sheet(filas);
+    const libro = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(libro, hoja, 'Caja chica');
+    XLSX.writeFile(libro, 'caja_chica.xlsx');
+  };
+
+  const imprimir = () => {
+    window.print();
+  };
 
   const openCreate = () => {
     setForm({ ...EMPTY, fecha: new Date().toISOString().substring(0, 10) });
@@ -146,7 +183,24 @@ function CajaChica() {
 
       {pageError && <p className="alert alert-error">{pageError}</p>}
 
-      <div className="table-wrapper">
+      <div className="toolbar no-print" style={{ flexWrap: 'wrap', alignItems: 'flex-end' }}>
+        <div className="form-group" style={{ margin: 0 }}>
+          <label>Desde</label>
+          <input type="date" className="form-control" value={filtroFechaDesde}
+            onChange={e => setFiltroFechaDesde(e.target.value)} />
+        </div>
+        <div className="form-group" style={{ margin: 0 }}>
+          <label>Hasta</label>
+          <input type="date" className="form-control" value={filtroFechaHasta}
+            onChange={e => setFiltroFechaHasta(e.target.value)} />
+        </div>
+        <button className="btn-primary btn-inline" onClick={aplicarFiltros}>Buscar</button>
+        <button className="btn-sm" onClick={limpiarFiltros}>Limpiar</button>
+        <button className="btn-sm" onClick={exportarExcel}>Exportar Excel</button>
+        <button className="btn-sm" onClick={imprimir}>Imprimir</button>
+      </div>
+
+      <div className="table-wrapper print-area">
         <table>
           <thead>
             <tr>
@@ -156,7 +210,7 @@ function CajaChica() {
               <th>Importe</th>
               <th>Usuario</th>
               <th>Saldo</th>
-              <th>Acciones</th>
+              <th className="no-print">Acciones</th>
             </tr>
           </thead>
           <tbody>
@@ -172,7 +226,7 @@ function CajaChica() {
                 <td>{row.Tipo === 'Entrada' ? '+ ' : '- '}{formatMonto(row.Importe)}</td>
                 <td className="td-muted">{row.Usuario || '—'}</td>
                 <td>{formatMonto(row.SaldoAcumulado)}</td>
-                <td>
+                <td className="no-print">
                   <div className="td-actions">
                     <button className="btn-sm" onClick={() => openEdit(row)}>Editar</button>
                     <button className="btn-sm danger" onClick={() => handleDelete(row.Id)}>Eliminar</button>

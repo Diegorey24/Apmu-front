@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { getPrestamos, getPrestamoById, createPrestamo, devolverLibro } from '../api/prestamos';
 import { searchAfiliados } from '../api/afiliados';
 import { getLibros } from '../api/libros';
+import { getConfiguracion, updateConfiguracion } from '../api/configuracion';
 import Modal from '../components/Modal';
 import { useSearchParams } from 'react-router-dom';
 import { formatFecha } from '../utils/fecha';
@@ -38,6 +39,12 @@ export default function Prestamos() {
   const [lineas, setLineas] = useState([]); // [{ idLibro, nombreLibro, fechaVencimiento }]
 
   const [errorCrear, setErrorCrear] = useState('');
+
+  // Configuración: precio préstamo libros de estudio
+  const [modalConfigOpen, setModalConfigOpen] = useState(false);
+  const [precioEstudio, setPrecioEstudio] = useState('');
+  const [savingConfig, setSavingConfig] = useState(false);
+  const [errorConfig, setErrorConfig] = useState('');
 
   const cargar = async (filtros = {}, p = 1) => {
     try {
@@ -152,6 +159,34 @@ export default function Prestamos() {
     }
   };
 
+  const abrirConfig = async () => {
+    setErrorConfig('');
+    try {
+      const res = await getConfiguracion();
+      const config = res.data.data.find(c => c.Clave === 'PrecioPrestamoEstudio');
+      setPrecioEstudio(config?.Valor || '');
+    } catch {
+      setErrorConfig('Error al cargar la configuración');
+    }
+    setModalConfigOpen(true);
+  };
+
+  const guardarConfig = async () => {
+    if (!precioEstudio || parseFloat(precioEstudio) <= 0) {
+      setErrorConfig('El precio debe ser mayor a 0');
+      return;
+    }
+    setSavingConfig(true);
+    try {
+      await updateConfiguracion('PrecioPrestamoEstudio', precioEstudio);
+      setModalConfigOpen(false);
+    } catch (err) {
+      setErrorConfig(err.response?.data?.message || 'Error al guardar');
+    } finally {
+      setSavingConfig(false);
+    }
+  };
+
   const abrirDetalle = async (id) => {
     const res = await getPrestamoById(id);
     setDetalle(res.data.data);
@@ -201,6 +236,7 @@ export default function Prestamos() {
         </select>
         <button className="btn-primary btn-inline" onClick={aplicarFiltros}>Buscar</button>
         <button className="btn-sm" onClick={limpiarFiltros}>Limpiar</button>
+        <button className="btn-sm" onClick={abrirConfig}>Configurar precio</button>
       </div>
 
       {loading ? <p>Cargando...</p> : (
@@ -210,6 +246,7 @@ export default function Prestamos() {
               <th>#</th>
               <th>Afiliado</th>
               <th>Documento</th>
+              <th>Nº Func.</th>
               <th>Fecha</th>
               <th>Libros</th>
               <th>Devueltos</th>
@@ -219,12 +256,13 @@ export default function Prestamos() {
           </thead>
           <tbody>
             {prestamos.length === 0 ? (
-              <tr><td colSpan={8}>No hay préstamos</td></tr>
+              <tr><td colSpan={9}>No hay préstamos</td></tr>
             ) : prestamos.map(p => (
               <tr key={p.Id}>
                 <td>{p.Id}</td>
                 <td>{p.NombreAfiliado}</td>
                 <td>{p.Documento}</td>
+                <td>{p.NroFuncionario || '—'}</td>
                 <td>{formatFecha(p.FechaPrestamo)}</td>
                 <td>{p.CantLibros}</td>
                 <td>{p.CantDevueltos}</td>
@@ -407,6 +445,28 @@ export default function Prestamos() {
         <div className="modal-actions">
           <button className="btn-sm" onClick={() => setModalCrearOpen(false)}>Cancelar</button>
           <button className="btn-primary btn-inline" onClick={guardarPrestamo}>Guardar préstamo</button>
+        </div>
+      </Modal>
+
+      {/* Modal configuración precio */}
+      <Modal isOpen={modalConfigOpen} onClose={() => setModalConfigOpen(false)}
+        title="Precio préstamo libros de estudio">
+        <div className="form-group">
+          <label>Precio por libro ($)</label>
+          <input
+            type="number" min="0" step="0.01"
+            className="form-control"
+            value={precioEstudio}
+            onChange={e => setPrecioEstudio(e.target.value)}
+            autoFocus
+          />
+        </div>
+        {errorConfig && <span className="error" style={{ display: 'block', marginBottom: 8 }}>{errorConfig}</span>}
+        <div className="modal-actions">
+          <button className="btn-sm" onClick={() => setModalConfigOpen(false)}>Cancelar</button>
+          <button className="btn-primary btn-inline" onClick={guardarConfig} disabled={savingConfig}>
+            {savingConfig ? 'Guardando...' : 'Guardar'}
+          </button>
         </div>
       </Modal>
     </div>

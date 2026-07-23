@@ -6,7 +6,7 @@ import Modal from '../components/Modal';
 
 const FORM_VACIO = {
   isbn: '', nombre: '', edicion: '', idEditorial: '', idMateria: '',
-  tipo: 'Literatura', material: '', stock: 0, costo: '',
+  tipo: 'Literatura', material: '', stock: 0, costo: '', autor: '', grado: '',
 };
 
 export default function Libros() {
@@ -94,6 +94,8 @@ export default function Libros() {
       material: libro.Material || '',
       stock: libro.Stock ?? 0,
       costo: libro.Costo ?? '',
+      autor: libro.Autor || '',
+      grado: libro.Grado || '',
     });
     setError('');
     setModalOpen(true);
@@ -169,10 +171,12 @@ export default function Libros() {
           <thead>
             <tr>
               <th>Nombre</th>
+              <th>Autor</th>
               <th>ISBN</th>
               <th>Tipo</th>
               <th>Editorial</th>
               <th>Materia</th>
+              <th>Grado</th>
               <th>Stock</th>
               <th>Costo</th>
               <th>Estado</th>
@@ -181,15 +185,17 @@ export default function Libros() {
           </thead>
           <tbody>
             {libros.length === 0 ? (
-              <tr><td colSpan={9}>No hay libros</td></tr>
+              <tr><td colSpan={11}>No hay libros</td></tr>
             ) : (
               libros.map(l => (
                 <tr key={l.Id} style={{ opacity: l.FechaBaja ? 0.5 : 1 }}>
                   <td>{l.Nombre}</td>
+                  <td>{l.Autor || '-'}</td>
                   <td>{l.ISBN || '-'}</td>
                   <td>{l.Tipo}</td>
                   <td>{l.NombreEditorial || '-'}</td>
                   <td>{l.NombreMateria || '-'}</td>
+                  <td>{l.Grado || '-'}</td>
                   <td>{l.Stock}</td>
                   <td>{l.Tipo === 'Estudio' && l.Costo ? `$ ${Number(l.Costo).toFixed(2)}` : '—'}</td>
                   <td>{l.FechaBaja ? 'Baja' : 'Activo'}</td>
@@ -235,6 +241,11 @@ export default function Libros() {
           </select>
         </div>
         <div className="form-group">
+          <label>Autor</label>
+          <input className="form-control" value={form.autor}
+            onChange={e => setField('autor', e.target.value)} />
+        </div>
+        <div className="form-group">
           <label>ISBN</label>
           <input className="form-control" value={form.isbn}
             onChange={e => setField('isbn', e.target.value)} />
@@ -260,6 +271,11 @@ export default function Libros() {
             <option value="">Sin materia</option>
             {materias.map(m => <option key={m.Id} value={m.Id}>{m.Nombre}</option>)}
           </select>
+        </div>
+        <div className="form-group">
+          <label>Grado</label>
+          <input className="form-control" value={form.grado}
+            onChange={e => setField('grado', e.target.value)} />
         </div>
         <div className="form-group">
           <label>Material</label>
