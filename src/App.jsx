@@ -14,6 +14,9 @@ import Prestamos from './pages/Prestamos';
 import Reportes from './pages/Reportes';
 import Creditos from './pages/Creditos';
 import CajaChica from './pages/CajaChica';
+import Banco from './pages/Banco';
+import PrestamosArticulos from './pages/PrestamosArticulos';
+import TarjetasMacro from './pages/TarjetasMacro';
 import SolicitudesAcceso from './pages/SolicitudesAcceso';
 import UsuariosWeb from './pages/UsuariosWeb';
 import PortalLogin from './pages/portal/PortalLogin';
@@ -58,6 +61,9 @@ function App() {
           <Route path="reportes" element={<Reportes />} />
           <Route path="creditos" element={<Creditos />} />
           <Route path="cajachica" element={<CajaChica />} />
+          <Route path="banco" element={<Banco />} />
+          <Route path="prestamos-articulos" element={<PrestamosArticulos />} />
+          <Route path="tarjetas-macro" element={<TarjetasMacro />} />
           <Route path="solicitudes-acceso" element={<SolicitudesAcceso />} />
           <Route path="usuarios-web" element={<UsuariosWeb />} />
           <Route path="categorias" element={<Categorias />} />

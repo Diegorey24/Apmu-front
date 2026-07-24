@@ -33,6 +33,7 @@ const grupos = [
     links: [
       { to: '/cuenta-corriente', label: 'Aportes' },
       { to: '/cajachica', label: 'Caja chica' },
+      { to: '/banco', label: 'Banco' },
       { to: '/creditos', label: 'Créditos Históricos CPMU' },
     ],
   },
@@ -42,6 +43,14 @@ const grupos = [
     links: [
       { to: '/licencias-gremiales', label: 'Licencias gremiales' },
       { to: '/beneficios', label: 'Beneficios' },
+      { to: '/tarjetas-macro', label: 'Tarjetas Macro Mercado' },
+    ],
+  },
+  {
+    id: 'discapacidad',
+    label: 'Discapacidad',
+    links: [
+      { to: '/prestamos-articulos', label: 'Préstamo de artículos' },
     ],
   },
   {

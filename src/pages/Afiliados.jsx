@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { getAfiliados, createAfiliado, updateAfiliado, deleteAfiliado, reactivarAfiliado } from '../api/afiliados';
+import { getAfiliados, createAfiliado, updateAfiliado, deleteAfiliado, reactivarAfiliado, searchAfiliados } from '../api/afiliados';
 import { getMotivosBaja } from '../api/motivosbaja';
 import { getCuentaCorriente, createCargo } from '../api/cuentacorriente';
 import { getRubros } from '../api/rubros';
@@ -63,10 +63,14 @@ function Afiliados() {
   const EMPTY_HIJO = {
     primerNombre: '', segundoNombre: '', primerApellido: '', segundoApellido: '',
     documento: '', fechaNacimiento: '', cedulaPadre: '', cedulaMadre: '',
-    discapacidad: false, patologia: '',
+    discapacidad: false, patologia: '', sexo: '',
   };
   const [formHijo, setFormHijo] = useState(EMPTY_HIJO);
   const [errorHijo, setErrorHijo] = useState('');
+  const [afiliadoPadreEncontrado, setAfiliadoPadreEncontrado] = useState(null);
+  const [afiliadoMadreEncontrado, setAfiliadoMadreEncontrado] = useState(null);
+  const timeoutPadreRef = useRef(null);
+  const timeoutMadreRef = useRef(null);
   const [verInactivos, setVerInactivos] = useState(false);
 
   // Configuración: fecha de corte para edad de hijos
@@ -243,6 +247,8 @@ function Afiliados() {
 
   const abrirCrearHijo = () => {
     setFormHijo(EMPTY_HIJO);
+    setAfiliadoPadreEncontrado(null);
+    setAfiliadoMadreEncontrado(null);
     setErrorHijo('');
     setModalHijo('crear');
   };
@@ -259,9 +265,36 @@ function Afiliados() {
       cedulaMadre: hijo.CedulaMadre || '',
       discapacidad: !!hijo.Discapacidad,
       patologia: hijo.Patologia || '',
+      sexo: hijo.Sexo || '',
     });
+    setAfiliadoPadreEncontrado(null);
+    setAfiliadoMadreEncontrado(null);
     setErrorHijo('');
     setModalHijo(hijo);
+  };
+
+  const onCedulaPadreChange = (valor) => {
+    setFormHijo(f => ({ ...f, cedulaPadre: valor }));
+    setAfiliadoPadreEncontrado(null);
+    clearTimeout(timeoutPadreRef.current);
+    if (valor.length < 7) return;
+    timeoutPadreRef.current = setTimeout(async () => {
+      const res = await searchAfiliados(valor);
+      const encontrado = (res.data.data || []).find(a => a.Documento === valor);
+      setAfiliadoPadreEncontrado(encontrado || null);
+    }, 400);
+  };
+
+  const onCedulaMadreChange = (valor) => {
+    setFormHijo(f => ({ ...f, cedulaMadre: valor }));
+    setAfiliadoMadreEncontrado(null);
+    clearTimeout(timeoutMadreRef.current);
+    if (valor.length < 7) return;
+    timeoutMadreRef.current = setTimeout(async () => {
+      const res = await searchAfiliados(valor);
+      const encontrado = (res.data.data || []).find(a => a.Documento === valor);
+      setAfiliadoMadreEncontrado(encontrado || null);
+    }, 400);
   };
 
   const abrirConfigCorte = async () => {
@@ -363,7 +396,7 @@ function Afiliados() {
     }
   };
 
-
+  const ubicacionSeleccionada = ubicaciones.find(u => String(u.Id) === String(form.IdUbicacion));
 
   return (
     <div className="page">
@@ -561,9 +594,29 @@ function Afiliados() {
                 <label htmlFor="IdUbicacion">Ubicación</label>
                 <select id="IdUbicacion" name="IdUbicacion" value={form.IdUbicacion} onChange={handleChange}>
                   <option value="">— Seleccioná —</option>
-                  {ubicaciones.map(u => <option key={u.Id} value={u.Id}>{u.Nombre} ({u.Tipo})</option>)}
+                  <optgroup label="Central">
+                    {ubicaciones.filter(u => u.Tipo === 'Central').map(u => <option key={u.Id} value={u.Id}>{u.Nombre}</option>)}
+                  </optgroup>
+                  <optgroup label="Sucursales">
+                    {ubicaciones.filter(u => u.Tipo === 'Sucursal').map(u => <option key={u.Id} value={u.Id}>{u.Nombre}</option>)}
+                  </optgroup>
+                  <optgroup label="Filiales">
+                    {ubicaciones.filter(u => u.Tipo === 'Filial').map(u => <option key={u.Id} value={u.Id}>{u.Nombre}</option>)}
+                  </optgroup>
                 </select>
               </div>
+
+              {ubicacionSeleccionada?.Tipo === 'Filial' && (
+                <div className="form-group full">
+                  <div style={{ background: 'var(--bg)', border: '1px solid var(--border)', borderRadius: 8, padding: 12, fontSize: 13 }}>
+                    <p style={{ margin: '0 0 6px', fontWeight: 600, color: 'var(--text-h)' }}>Datos de la filial</p>
+                    <p style={{ margin: '2px 0' }}>Dirección: {ubicacionSeleccionada.Direccion || '—'}</p>
+                    <p style={{ margin: '2px 0' }}>Correo: {ubicacionSeleccionada.Correo || '—'}</p>
+                    <p style={{ margin: '2px 0' }}>Teléfono: {ubicacionSeleccionada.Telefono || '—'}</p>
+                    <p style={{ margin: '2px 0' }}>Empresa de envío: {ubicacionSeleccionada.EmpresaEnvio || '—'}</p>
+                  </div>
+                </div>
+              )}
 
               <p className="section-title">Contacto</p>
 
@@ -703,6 +756,7 @@ function Afiliados() {
                         <th>Nacimiento</th>
                         <th>Edad</th>
                         <th>Discapacidad</th>
+                        <th>Vínculo</th>
                         <th>Validado</th>
                         <th></th>
                       </tr>
@@ -715,6 +769,7 @@ function Afiliados() {
                           <td>{h.FechaNacimiento ? h.FechaNacimiento.substring(0, 10) : '—'}</td>
                           <td>{h.EdadAlCorte ?? '—'}</td>
                           <td title={h.Patologia || ''}>{h.Discapacidad ? 'Sí' : 'No'}</td>
+                          <td>{h.VinculadoA === 'secundario' ? 'Secundario' : 'Titular principal'}</td>
                           <td>
                             <span style={{ color: h.Validado ? 'var(--accent)' : 'var(--text)', fontWeight: 500 }}>
                               {h.Validado ? '✓ Sí' : '✗ No'}
@@ -726,7 +781,9 @@ function Afiliados() {
                               <button type="button" className="btn-sm" onClick={() => toggleValidarHijo(h)}>
                                 {h.Validado ? 'Desvalidar' : 'Validar'}
                               </button>
-                              <button type="button" className="btn-sm danger" onClick={() => eliminarHijo(h.Id)}>Eliminar</button>
+                              {h.VinculadoA !== 'secundario' && (
+                                <button type="button" className="btn-sm danger" onClick={() => eliminarHijo(h.Id)}>Eliminar</button>
+                              )}
                             </div>
                           </td>
                         </tr>
@@ -888,12 +945,33 @@ function Afiliados() {
               <div className="form-group">
                 <label>CI del padre</label>
                 <input className="form-control" value={formHijo.cedulaPadre}
-                  onChange={e => setFormHijo(f => ({ ...f, cedulaPadre: e.target.value }))} />
+                  onChange={e => onCedulaPadreChange(e.target.value)} />
+                {afiliadoPadreEncontrado && (
+                  <small style={{ color: 'var(--accent)', fontSize: 12 }}>
+                    Se encontró al afiliado {afiliadoPadreEncontrado.PrimerNombre} {afiliadoPadreEncontrado.PrimerApellido} con esta CI. El hijo quedará vinculado a ambos.
+                  </small>
+                )}
               </div>
               <div className="form-group">
                 <label>CI de la madre</label>
                 <input className="form-control" value={formHijo.cedulaMadre}
-                  onChange={e => setFormHijo(f => ({ ...f, cedulaMadre: e.target.value }))} />
+                  onChange={e => onCedulaMadreChange(e.target.value)} />
+                {afiliadoMadreEncontrado && (
+                  <small style={{ color: 'var(--accent)', fontSize: 12 }}>
+                    Se encontró al afiliado {afiliadoMadreEncontrado.PrimerNombre} {afiliadoMadreEncontrado.PrimerApellido} con esta CI. El hijo quedará vinculado a ambos.
+                  </small>
+                )}
+              </div>
+              <div className="form-group">
+                <label>Sexo</label>
+                <select className="form-control" value={formHijo.sexo}
+                  onChange={e => setFormHijo(f => ({ ...f, sexo: e.target.value }))}>
+                  <option value="">—</option>
+                  <option value="M">Masculino</option>
+                  <option value="F">Femenino</option>
+                  <option value="NB">No binario</option>
+                  <option value="O">Otros</option>
+                </select>
               </div>
               <div className="form-group">
                 <label>Discapacidad</label>

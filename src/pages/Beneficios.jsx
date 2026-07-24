@@ -1,15 +1,28 @@
 import { useState, useEffect, useRef } from 'react';
-import { getBeneficios, createBeneficio, deleteBeneficio } from '../api/beneficios';
+import * as XLSX from 'xlsx';
+import { getBeneficios, createBeneficio, deleteBeneficio, getListadoCanastas, getListadoUtiles } from '../api/beneficios';
 import { searchAfiliados } from '../api/afiliados';
 import { getHijos } from '../api/hijos';
 import Modal from '../components/Modal';
+import { formatFecha } from '../utils/fecha';
 
 const anioActual = new Date().getFullYear();
 const anios = Array.from({ length: 5 }, (_, i) => anioActual - i);
 
 export default function Beneficios() {
+    const [tab, setTab] = useState('registro');
     const [beneficios, setBeneficios] = useState([]);
     const [loading, setLoading] = useState(true);
+
+    // Listado canastas
+    const [listadoCanastas, setListadoCanastas] = useState([]);
+    const [loadingCanastas, setLoadingCanastas] = useState(false);
+    const [anioCanastas, setAnioCanastas] = useState(String(anioActual));
+
+    // Listado útiles
+    const [listadoUtiles, setListadoUtiles] = useState([]);
+    const [loadingUtiles, setLoadingUtiles] = useState(false);
+    const [anioUtiles, setAnioUtiles] = useState(String(anioActual));
     const [modalOpen, setModalOpen] = useState(false);
     const [form, setForm] = useState({
         idAfiliado: '', tipo: 'Canasta', anio: anioActual,
@@ -112,71 +125,240 @@ export default function Beneficios() {
         }
     };
 
+    const cargarCanastas = async (anio = anioCanastas) => {
+        setLoadingCanastas(true);
+        try {
+            const res = await getListadoCanastas({ anio: anio || undefined });
+            setListadoCanastas(res.data.data || []);
+        } finally {
+            setLoadingCanastas(false);
+        }
+    };
+
+    const cargarUtiles = async (anio = anioUtiles) => {
+        setLoadingUtiles(true);
+        try {
+            const res = await getListadoUtiles({ anio: anio || undefined });
+            setListadoUtiles(res.data.data || []);
+        } finally {
+            setLoadingUtiles(false);
+        }
+    };
+
+    const cambiarTab = (t) => {
+        setTab(t);
+        if (t === 'canastas' && listadoCanastas.length === 0) cargarCanastas();
+        if (t === 'utiles' && listadoUtiles.length === 0) cargarUtiles();
+    };
+
+    const exportarCanastasExcel = () => {
+        const filas = listadoCanastas.map(r => ({
+            'Nº Funcionario': r.NroFuncionario || '',
+            Documento: r.Documento,
+            Nombre: r.NombreCompleto,
+            'Deuda libros': r.DeudaLibros ? 'Sí' : 'No',
+            Sucursal: r.Ubicacion || '',
+        }));
+        const hoja = XLSX.utils.json_to_sheet(filas);
+        const libro = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(libro, hoja, 'Canastas');
+        XLSX.writeFile(libro, 'beneficios_canastas.xlsx');
+    };
+
+    const exportarUtilesExcel = () => {
+        const filas = listadoUtiles.map(r => ({
+            'Nº Funcionario': r.NroFuncionario || '',
+            'Nombre socio': r.NombreSocio,
+            CI: r.Documento,
+            'Nombre hijo': r.NombreHijo,
+            'F. Nac.': r.FechaNacimiento ? r.FechaNacimiento.substring(0, 10) : '',
+            Edad: r.Edad ?? '',
+            Género: r.Sexo || '',
+            Ubicación: r.Ubicacion || '',
+        }));
+        const hoja = XLSX.utils.json_to_sheet(filas);
+        const libro = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(libro, hoja, 'Utiles');
+        XLSX.writeFile(libro, 'beneficios_utiles.xlsx');
+    };
+
+    const imprimir = () => window.print();
+
     return (
         <div className="page">
             <div className="page-header">
                 <h1>Beneficios</h1>
-                <button className="btn-primary btn-inline" onClick={abrirCrear}>+ Registrar beneficio</button>
+                {tab === 'registro' && (
+                    <button className="btn-primary btn-inline" onClick={abrirCrear}>+ Registrar beneficio</button>
+                )}
             </div>
 
-            {advertencia && (
+            <div className="tabs no-print">
+                <button className={tab === 'registro' ? 'active' : ''} onClick={() => cambiarTab('registro')}>Registro</button>
+                <button className={tab === 'canastas' ? 'active' : ''} onClick={() => cambiarTab('canastas')}>Listado canastas</button>
+                <button className={tab === 'utiles' ? 'active' : ''} onClick={() => cambiarTab('utiles')}>Listado útiles</button>
+            </div>
+
+            {tab === 'registro' && advertencia && (
                 <div className="alert" style={{ background: 'rgba(245,158,11,0.1)', color: '#f59e0b', border: '1px solid rgba(245,158,11,0.3)', marginBottom: 16 }}>
                     ⚠ {advertencia}
                 </div>
             )}
 
-            <div className="toolbar" style={{ flexWrap: 'wrap', alignItems: 'flex-end' }}>
-                <div className="form-group" style={{ margin: 0 }}>
-                    <label>Tipo</label>
-                    <select className="form-control" value={filtroTipo}
-                        onChange={e => setFiltroTipo(e.target.value)}>
-                        <option value="">Todos</option>
-                        <option value="Canasta">Canasta</option>
-                        <option value="Utiles">Útiles escolares</option>
-                    </select>
-                </div>
-                <div className="form-group" style={{ margin: 0 }}>
-                    <label>Año</label>
-                    <select className="form-control" value={filtroAnio}
-                        onChange={e => setFiltroAnio(e.target.value)}>
-                        <option value="">Todos</option>
-                        {anios.map(a => <option key={a} value={a}>{a}</option>)}
-                    </select>
-                </div>
-                <button className="btn-primary btn-inline" onClick={aplicarFiltros}>Buscar</button>
-            </div>
+            {tab === 'registro' && (
+                <>
+                    <div className="toolbar no-print" style={{ flexWrap: 'wrap', alignItems: 'flex-end' }}>
+                        <div className="form-group" style={{ margin: 0 }}>
+                            <label>Tipo</label>
+                            <select className="form-control" value={filtroTipo}
+                                onChange={e => setFiltroTipo(e.target.value)}>
+                                <option value="">Todos</option>
+                                <option value="Canasta">Canasta</option>
+                                <option value="Utiles">Útiles escolares</option>
+                            </select>
+                        </div>
+                        <div className="form-group" style={{ margin: 0 }}>
+                            <label>Año</label>
+                            <select className="form-control" value={filtroAnio}
+                                onChange={e => setFiltroAnio(e.target.value)}>
+                                <option value="">Todos</option>
+                                {anios.map(a => <option key={a} value={a}>{a}</option>)}
+                            </select>
+                        </div>
+                        <button className="btn-primary btn-inline" onClick={aplicarFiltros}>Buscar</button>
+                    </div>
 
-            {loading ? <p>Cargando...</p> : (
-                <table className="tabla">
-                    <thead>
-                        <tr>
-                            <th>Afiliado</th>
-                            <th>Documento</th>
-                            <th>Tipo</th>
-                            <th>Hijo</th>
-                            <th>Año</th>
-                            <th>Fecha entrega</th>
-                            <th>Acciones</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {beneficios.length === 0 ? (
-                            <tr><td colSpan={7}>No hay beneficios registrados</td></tr>
-                        ) : beneficios.map(b => (
-                            <tr key={b.Id}>
-                                <td>{b.NombreAfiliado}</td>
-                                <td>{b.Documento}</td>
-                                <td>{b.Tipo === 'Utiles' ? 'Útiles escolares' : 'Canasta'}</td>
-                                <td>{b.NombreHijo || '—'}</td>
-                                <td>{b.Anio}</td>
-                                <td>{b.FechaEntrega?.substring(0, 10)}</td>
-                                <td>
-                                    <button className="btn-sm danger" onClick={() => eliminar(b)}>Eliminar</button>
-                                </td>
-                            </tr>
-                        ))}
-                    </tbody>
-                </table>
+                    {loading ? <p>Cargando...</p> : (
+                        <table className="tabla">
+                            <thead>
+                                <tr>
+                                    <th>Afiliado</th>
+                                    <th>Documento</th>
+                                    <th>Tipo</th>
+                                    <th>Hijo</th>
+                                    <th>Año</th>
+                                    <th>Fecha entrega</th>
+                                    <th>Acciones</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {beneficios.length === 0 ? (
+                                    <tr><td colSpan={7}>No hay beneficios registrados</td></tr>
+                                ) : beneficios.map(b => (
+                                    <tr key={b.Id}>
+                                        <td>{b.NombreAfiliado}</td>
+                                        <td>{b.Documento}</td>
+                                        <td>{b.Tipo === 'Utiles' ? 'Útiles escolares' : 'Canasta'}</td>
+                                        <td>{b.NombreHijo || '—'}</td>
+                                        <td>{b.Anio}</td>
+                                        <td>{b.FechaEntrega?.substring(0, 10)}</td>
+                                        <td>
+                                            <button className="btn-sm danger" onClick={() => eliminar(b)}>Eliminar</button>
+                                        </td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
+                    )}
+                </>
+            )}
+
+            {tab === 'canastas' && (
+                <>
+                    <div className="toolbar no-print" style={{ flexWrap: 'wrap', alignItems: 'flex-end' }}>
+                        <div className="form-group" style={{ margin: 0 }}>
+                            <label>Año</label>
+                            <select className="form-control" value={anioCanastas}
+                                onChange={e => setAnioCanastas(e.target.value)}>
+                                <option value="">Todos</option>
+                                {anios.map(a => <option key={a} value={a}>{a}</option>)}
+                            </select>
+                        </div>
+                        <button className="btn-primary btn-inline" onClick={() => cargarCanastas()}>Buscar</button>
+                        <button className="btn-sm" onClick={exportarCanastasExcel}>Exportar Excel</button>
+                        <button className="btn-sm" onClick={imprimir}>Imprimir</button>
+                    </div>
+
+                    {loadingCanastas ? <p>Cargando...</p> : (
+                        <table className="tabla print-area">
+                            <thead>
+                                <tr>
+                                    <th>Nº Func.</th>
+                                    <th>Documento</th>
+                                    <th>Nombre</th>
+                                    <th>Deuda libros</th>
+                                    <th>Sucursal</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {listadoCanastas.length === 0 ? (
+                                    <tr><td colSpan={5}>No hay registros</td></tr>
+                                ) : listadoCanastas.map((r, i) => (
+                                    <tr key={i}>
+                                        <td>{r.NroFuncionario || '—'}</td>
+                                        <td>{r.Documento}</td>
+                                        <td>{r.NombreCompleto}</td>
+                                        <td style={{ color: r.DeudaLibros ? 'var(--error)' : 'inherit', fontWeight: r.DeudaLibros ? 500 : 400 }}>
+                                            {r.DeudaLibros ? 'Sí' : 'No'}
+                                        </td>
+                                        <td>{r.Ubicacion || '—'}</td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
+                    )}
+                </>
+            )}
+
+            {tab === 'utiles' && (
+                <>
+                    <div className="toolbar no-print" style={{ flexWrap: 'wrap', alignItems: 'flex-end' }}>
+                        <div className="form-group" style={{ margin: 0 }}>
+                            <label>Año</label>
+                            <select className="form-control" value={anioUtiles}
+                                onChange={e => setAnioUtiles(e.target.value)}>
+                                <option value="">Todos</option>
+                                {anios.map(a => <option key={a} value={a}>{a}</option>)}
+                            </select>
+                        </div>
+                        <button className="btn-primary btn-inline" onClick={() => cargarUtiles()}>Buscar</button>
+                        <button className="btn-sm" onClick={exportarUtilesExcel}>Exportar Excel</button>
+                        <button className="btn-sm" onClick={imprimir}>Imprimir</button>
+                    </div>
+
+                    {loadingUtiles ? <p>Cargando...</p> : (
+                        <table className="tabla print-area">
+                            <thead>
+                                <tr>
+                                    <th>Nº Func.</th>
+                                    <th>Nombre socio</th>
+                                    <th>CI</th>
+                                    <th>Nombre hijo</th>
+                                    <th>F. Nac.</th>
+                                    <th>Edad</th>
+                                    <th>Género</th>
+                                    <th>Ubicación</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {listadoUtiles.length === 0 ? (
+                                    <tr><td colSpan={8}>No hay registros</td></tr>
+                                ) : listadoUtiles.map((r, i) => (
+                                    <tr key={i}>
+                                        <td>{r.NroFuncionario || '—'}</td>
+                                        <td>{r.NombreSocio}</td>
+                                        <td>{r.Documento}</td>
+                                        <td>{r.NombreHijo}</td>
+                                        <td>{formatFecha(r.FechaNacimiento)}</td>
+                                        <td>{r.Edad ?? '—'}</td>
+                                        <td>{r.Sexo || '—'}</td>
+                                        <td>{r.Ubicacion || '—'}</td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
+                    )}
+                </>
             )}
 
             <Modal isOpen={modalOpen} onClose={() => setModalOpen(false)} title="Registrar beneficio">

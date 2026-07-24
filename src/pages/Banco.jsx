@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import * as XLSX from 'xlsx';
-import { getCajaChica, createMovimiento, updateMovimiento, deleteMovimiento } from '../api/cajachica';
+import { getBanco, createMovimiento, updateMovimiento, deleteMovimiento } from '../api/banco';
 import { getPlanCuentas } from '../api/plancuentas';
 import { getCentrosCosto } from '../api/centroscosto';
 import Modal from '../components/Modal';
@@ -11,7 +11,7 @@ const EMPTY = {
   idCentroCosto: '', debe: '', haber: '',
 };
 
-function CajaChica() {
+function Banco() {
   const [data, setData]       = useState([]);
   const [resumen, setResumen] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -33,7 +33,7 @@ function CajaChica() {
     setLoading(true);
     setPageError('');
     try {
-      const res = await getCajaChica(filtros);
+      const res = await getBanco(filtros);
       setData(res.data.data || []);
       setResumen(res.data.resumen || null);
     } catch {
@@ -77,8 +77,8 @@ function CajaChica() {
     }));
     const hoja = XLSX.utils.json_to_sheet(filas);
     const libro = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(libro, hoja, 'Caja chica');
-    XLSX.writeFile(libro, 'caja_chica.xlsx');
+    XLSX.utils.book_append_sheet(libro, hoja, 'Banco');
+    XLSX.writeFile(libro, 'caja_banco.xlsx');
   };
 
   const imprimir = () => {
@@ -184,7 +184,7 @@ function CajaChica() {
   return (
     <div className="page">
       <div className="page-header">
-        <h2 className="page-title">Caja chica</h2>
+        <h2 className="page-title">Banco</h2>
         <button className="btn-primary btn-inline" onClick={openCreate}>+ Nuevo movimiento</button>
       </div>
 
@@ -345,4 +345,4 @@ function CajaChica() {
   );
 }
 
-export default CajaChica;
+export default Banco;
