@@ -4,6 +4,7 @@ import { getCajaChica, createMovimiento, updateMovimiento, deleteMovimiento } fr
 import { getPlanCuentas } from '../api/plancuentas';
 import { getCentrosCosto } from '../api/centroscosto';
 import Modal from '../components/Modal';
+import { confirmDialog } from '../components/ConfirmDialog';
 import { formatFecha } from '../utils/fecha';
 
 const EMPTY = {
@@ -64,7 +65,7 @@ function CajaChica() {
 
   const exportarExcel = () => {
     const filas = data.map(row => ({
-      'N° Comp': row.NroComp ?? '',
+      'Nro Interno Comp.': row.NroComp ?? '',
       Fecha: row.Fecha ? row.Fecha.substring(0, 10) : '',
       Comprobante: row.Comprobante || '',
       Rubro: row.CodigoCuenta || '',
@@ -77,8 +78,8 @@ function CajaChica() {
     }));
     const hoja = XLSX.utils.json_to_sheet(filas);
     const libro = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(libro, hoja, 'Caja chica');
-    XLSX.writeFile(libro, 'caja_chica.xlsx');
+    XLSX.utils.book_append_sheet(libro, hoja, 'Fondo Fijo');
+    XLSX.writeFile(libro, 'fondo_fijo.xlsx');
   };
 
   const imprimir = () => {
@@ -170,7 +171,7 @@ function CajaChica() {
   };
 
   const handleDelete = async (id) => {
-    if (!confirm('¿Eliminar este movimiento?')) return;
+    if (!(await confirmDialog('¿Eliminar este movimiento?'))) return;
     try {
       await deleteMovimiento(id);
       load();
@@ -184,7 +185,7 @@ function CajaChica() {
   return (
     <div className="page">
       <div className="page-header">
-        <h2 className="page-title">Caja chica</h2>
+        <h2 className="page-title">Fondo Fijo</h2>
         <button className="btn-primary btn-inline" onClick={openCreate}>+ Nuevo movimiento</button>
       </div>
 
@@ -228,7 +229,7 @@ function CajaChica() {
         <table>
           <thead>
             <tr>
-              <th>N° Comp</th>
+              <th>Nro Interno Comp.</th>
               <th>Fecha</th>
               <th>Comprobante</th>
               <th>Rubro</th>

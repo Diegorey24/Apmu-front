@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { getEditoriales, createEditorial, updateEditorial, deleteEditorial } from '../api/editoriales';
 import Modal from '../components/Modal';
+import { confirmDialog } from '../components/ConfirmDialog';
 
 export default function Editoriales() {
   const [editoriales, setEditoriales] = useState([]);
@@ -51,7 +52,7 @@ export default function Editoriales() {
   };
 
   const eliminar = async (editorial) => {
-    if (!confirm(`¿Eliminar "${editorial.Nombre}"?`)) return;
+    if (!(await confirmDialog(`¿Eliminar "${editorial.Nombre}"?`))) return;
     try {
       await deleteEditorial(editorial.Id);
       cargar();

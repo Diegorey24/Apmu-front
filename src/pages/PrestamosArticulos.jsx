@@ -6,6 +6,7 @@ import {
 } from '../api/prestamos-articulos';
 import { searchAfiliados } from '../api/afiliados';
 import Modal from '../components/Modal';
+import { confirmDialog } from '../components/ConfirmDialog';
 import { formatFecha } from '../utils/fecha';
 
 const FORM_VACIO = {
@@ -126,7 +127,7 @@ export default function PrestamosArticulos() {
   };
 
   const devolver = async (p) => {
-    if (!confirm(`¿Registrar la devolución del artículo de ${p.PrimerNombre} ${p.PrimerApellido}?`)) return;
+    if (!(await confirmDialog(`¿Registrar la devolución del artículo de ${p.PrimerNombre} ${p.PrimerApellido}?`))) return;
     try {
       await devolverPrestamoArticulo(p.Id);
       cargar({ estado: filtroEstado || undefined, fechaDesde: filtroFechaDesde || undefined, fechaHasta: filtroFechaHasta || undefined });
@@ -136,7 +137,7 @@ export default function PrestamosArticulos() {
   };
 
   const eliminar = async (p) => {
-    if (!confirm(`¿Eliminar este préstamo de artículo?`)) return;
+    if (!(await confirmDialog(`¿Eliminar este préstamo de artículo?`))) return;
     try {
       await deletePrestamoArticulo(p.Id);
       cargar({ estado: filtroEstado || undefined, fechaDesde: filtroFechaDesde || undefined, fechaHasta: filtroFechaHasta || undefined });

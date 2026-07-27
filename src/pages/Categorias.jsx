@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { getCategorias, createCategoria, updateCategoria, deleteCategoria } from '../api/categorias';
 import Modal from '../components/Modal';
+import { confirmDialog } from '../components/ConfirmDialog';
 
 export default function Categorias() {
     const [categorias, setCategorias] = useState([]);
@@ -51,7 +52,7 @@ export default function Categorias() {
     };
 
     const eliminar = async (cat) => {
-        if (!confirm(`¿Eliminar "${cat.Nombre}"?`)) return;
+        if (!(await confirmDialog(`¿Eliminar "${cat.Nombre}"?`))) return;
         try {
             await deleteCategoria(cat.Id);
             cargar();

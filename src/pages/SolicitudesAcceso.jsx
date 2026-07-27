@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { getPortalPendientes, aprobarPortal, rechazarPortal, resetPasswordPortal, eliminarSolicitudPortal, crearUsuarioPortal, getUsuariosPortal } from '../api/portal';
 import Modal from '../components/Modal';
+import { confirmDialog } from '../components/ConfirmDialog';
 
 export default function SolicitudesAcceso() {
   const [solicitudes, setSolicitudes] = useState([]);
@@ -50,7 +51,7 @@ export default function SolicitudesAcceso() {
   };
 
   const rechazar = async (id) => {
-    if (!confirm('¿Rechazar esta solicitud?')) return;
+    if (!(await confirmDialog('¿Rechazar esta solicitud?'))) return;
     try {
       await rechazarPortal(id);
       cargar();
@@ -99,7 +100,7 @@ export default function SolicitudesAcceso() {
   };
 
   const eliminarSolicitud = async (id) => {
-    if (!confirm('¿Eliminar esta solicitud? El socio podrá volver a registrarse.')) return;
+    if (!(await confirmDialog('¿Eliminar esta solicitud? El socio podrá volver a registrarse.'))) return;
     try {
       await eliminarSolicitudPortal(id);
       cargar();

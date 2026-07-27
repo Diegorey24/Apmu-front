@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { getUbicaciones, createUbicacion, updateUbicacion, deleteUbicacion } from '../api/ubicaciones';
 import Modal from '../components/Modal';
+import { confirmDialog } from '../components/ConfirmDialog';
 
 const TIPOS = ['Central', 'Sucursal', 'Filial'];
 const FORM_VACIO = { tipo: 'Central', nombre: '' };
@@ -56,7 +57,7 @@ export default function Ubicaciones() {
     };
 
     const eliminar = async (u) => {
-        if (!confirm(`¿Eliminar "${u.Nombre}"?`)) return;
+        if (!(await confirmDialog(`¿Eliminar "${u.Nombre}"?`))) return;
         try {
             await deleteUbicacion(u.Id);
             cargar();

@@ -3,6 +3,7 @@ import { getLibros, createLibro, updateLibro, bajaLibro, altaLibro } from '../ap
 import { getEditoriales } from '../api/editoriales';
 import { getMaterias } from '../api/materias';
 import Modal from '../components/Modal';
+import { confirmDialog } from '../components/ConfirmDialog';
 
 const FORM_VACIO = {
   isbn: '', nombre: '', edicion: '', idEditorial: '', idMateria: '',
@@ -123,7 +124,7 @@ export default function Libros() {
     const msg = activo
       ? `¿Dar de baja "${libro.Nombre}"?`
       : `¿Reactivar "${libro.Nombre}"?`;
-    if (!confirm(msg)) return;
+    if (!(await confirmDialog(msg))) return;
     try {
       if (activo) await bajaLibro(libro.Id);
       else await altaLibro(libro.Id);

@@ -5,6 +5,7 @@ import {
 } from '../api/tarjetas-macro';
 import { searchAfiliados } from '../api/afiliados';
 import Modal from '../components/Modal';
+import { confirmDialog } from '../components/ConfirmDialog';
 
 const ORDEN_ESTADOS = ['Pendiente', 'Solicitado', 'En APMU', 'Entregado'];
 
@@ -93,7 +94,7 @@ export default function TarjetasMacro() {
     const indiceActual = ORDEN_ESTADOS.indexOf(t.Estado);
     const siguiente = ORDEN_ESTADOS[indiceActual + 1];
     if (!siguiente) return;
-    if (!confirm(`¿Cambiar a ${siguiente}?`)) return;
+    if (!(await confirmDialog(`¿Cambiar a ${siguiente}?`))) return;
     try {
       await cambiarEstadoTarjetaMacro(t.Id, siguiente);
       cargar({ estado: filtroEstado || undefined });
@@ -103,7 +104,7 @@ export default function TarjetasMacro() {
   };
 
   const eliminar = async (t) => {
-    if (!confirm('¿Eliminar esta solicitud de tarjeta?')) return;
+    if (!(await confirmDialog('¿Eliminar esta solicitud de tarjeta?'))) return;
     try {
       await deleteTarjetaMacro(t.Id);
       cargar({ estado: filtroEstado || undefined });

@@ -4,6 +4,7 @@ import { getBanco, createMovimiento, updateMovimiento, deleteMovimiento } from '
 import { getPlanCuentas } from '../api/plancuentas';
 import { getCentrosCosto } from '../api/centroscosto';
 import Modal from '../components/Modal';
+import { confirmDialog } from '../components/ConfirmDialog';
 import { formatFecha } from '../utils/fecha';
 
 const EMPTY = {
@@ -64,7 +65,7 @@ function Banco() {
 
   const exportarExcel = () => {
     const filas = data.map(row => ({
-      'N° Comp': row.NroComp ?? '',
+      'Nro Interno Comp.': row.NroComp ?? '',
       Fecha: row.Fecha ? row.Fecha.substring(0, 10) : '',
       Comprobante: row.Comprobante || '',
       Rubro: row.CodigoCuenta || '',
@@ -170,7 +171,7 @@ function Banco() {
   };
 
   const handleDelete = async (id) => {
-    if (!confirm('¿Eliminar este movimiento?')) return;
+    if (!(await confirmDialog('¿Eliminar este movimiento?'))) return;
     try {
       await deleteMovimiento(id);
       load();
@@ -228,7 +229,7 @@ function Banco() {
         <table>
           <thead>
             <tr>
-              <th>N° Comp</th>
+              <th>Nro Interno Comp.</th>
               <th>Fecha</th>
               <th>Comprobante</th>
               <th>Rubro</th>

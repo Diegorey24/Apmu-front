@@ -4,6 +4,7 @@ import { searchAfiliados } from '../api/afiliados';
 import { getLibros } from '../api/libros';
 import { getConfiguracion, updateConfiguracion } from '../api/configuracion';
 import Modal from '../components/Modal';
+import { confirmDialog } from '../components/ConfirmDialog';
 import { useSearchParams } from 'react-router-dom';
 import { formatFecha } from '../utils/fecha';
 
@@ -194,7 +195,7 @@ export default function Prestamos() {
   };
 
   const handleDevolver = async (idLinea) => {
-    if (!confirm('¿Registrar devolución de este libro?')) return;
+    if (!(await confirmDialog('¿Registrar devolución de este libro?'))) return;
     try {
       await devolverLibro(idLinea);
       // Recargar detalle

@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { getSolicitudesAfiliacion, aprobarSolicitud, rechazarSolicitud } from '../api/solicitudesafiliacion';
 import Modal from '../components/Modal';
+import { confirmDialog } from '../components/ConfirmDialog';
 
 export default function GestionSolicitudesAfiliacion() {
     const [solicitudes, setSolicitudes] = useState([]);
@@ -24,7 +25,7 @@ export default function GestionSolicitudesAfiliacion() {
     useEffect(() => { cargar('Pendiente'); }, []);
 
     const aprobar = async (id) => {
-        if (!confirm('¿Aprobar esta solicitud? Se creará el afiliado automáticamente.')) return;
+        if (!(await confirmDialog('¿Aprobar esta solicitud? Se creará el afiliado automáticamente.'))) return;
         try {
             await aprobarSolicitud(id);
             cargar(filtroEstado);

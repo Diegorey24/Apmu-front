@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import client from '../api/client';
 import Modal from '../components/Modal';
+import { confirmDialog } from '../components/ConfirmDialog';
 
 function UsuariosWeb() {
   const [data, setData] = useState([]);
@@ -87,7 +88,7 @@ function UsuariosWeb() {
       }
     }
     const accion = nuevoEstado === 1 ? 'activar' : 'desactivar';
-    if (!confirm(`¿${accion.charAt(0).toUpperCase() + accion.slice(1)} al usuario "${usuario.Usuario?.trim()}"?`)) return;
+    if (!(await confirmDialog(`¿${accion.charAt(0).toUpperCase() + accion.slice(1)} al usuario "${usuario.Usuario?.trim()}"?`))) return;
     try {
       await client.patch(`/usuarios-web/${usuario.ID}/toggle-active`, { active: nuevoEstado });
       load();

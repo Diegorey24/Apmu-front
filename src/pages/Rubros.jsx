@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { getRubros, createRubro, updateRubro, deleteRubro } from '../api/rubros';
 import Modal from '../components/Modal';
+import { confirmDialog } from '../components/ConfirmDialog';
 
 const EMPTY = { RubCod: '', RubDsc: '', Importe: '' };
 
@@ -80,7 +81,7 @@ function Rubros() {
   };
 
   const handleDelete = async (id) => {
-    if (!confirm('¿Eliminar este rubro?')) return;
+    if (!(await confirmDialog('¿Eliminar este rubro?'))) return;
     try {
       await deleteRubro(id);
       load();

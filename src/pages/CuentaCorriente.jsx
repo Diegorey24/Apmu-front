@@ -3,6 +3,7 @@ import { getCuentaCorriente, createCargo, updateCargo, cobrarCargo, deleteCargo 
 import { getAfiliados } from '../api/afiliados';
 import { getRubros } from '../api/rubros';
 import Modal from '../components/Modal';
+import { confirmDialog } from '../components/ConfirmDialog';
 import { useSearchParams } from 'react-router-dom';
 import { formatFecha } from '../utils/fecha';
 
@@ -218,7 +219,7 @@ useEffect(() => {
   };
 
   const handleDelete = async (id) => {
-    if (!confirm('¿Eliminar este cargo? Solo se pueden eliminar cargos pendientes.')) return;
+    if (!(await confirmDialog('¿Eliminar este cargo? Solo se pueden eliminar cargos pendientes.'))) return;
     try {
       await deleteCargo(id);
       load(page);

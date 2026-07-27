@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { getMaterias, createMateria, updateMateria, deleteMateria } from '../api/materias';
 import Modal from '../components/Modal';
+import { confirmDialog } from '../components/ConfirmDialog';
 
 export default function Materias() {
   const [materias, setMaterias] = useState([]);
@@ -51,7 +52,7 @@ export default function Materias() {
   };
 
   const eliminar = async (materia) => {
-    if (!confirm(`¿Eliminar "${materia.Nombre}"?`)) return;
+    if (!(await confirmDialog(`¿Eliminar "${materia.Nombre}"?`))) return;
     try {
       await deleteMateria(materia.Id);
       cargar();

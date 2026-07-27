@@ -3,6 +3,7 @@ import * as XLSX from 'xlsx';
 import { getLicencias, createLicencia, updateLicencia, deleteLicencia } from '../api/licenciasgremiales';
 import { searchAfiliados } from '../api/afiliados';
 import Modal from '../components/Modal';
+import { confirmDialog } from '../components/ConfirmDialog';
 
 const FORM_VACIO = {
     idAfiliado: '', solicitadaPor: '', horario: '',
@@ -138,7 +139,7 @@ export default function LicenciasGremiales() {
     };
 
     const eliminar = async (lic) => {
-        if (!confirm(`¿Eliminar licencia de ${lic.NombreAfiliado}?`)) return;
+        if (!(await confirmDialog(`¿Eliminar licencia de ${lic.NombreAfiliado}?`))) return;
         try {
             await deleteLicencia(lic.Id);
             cargar();

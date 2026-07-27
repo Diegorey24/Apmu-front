@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { getAutores, createAutor, updateAutor, deleteAutor } from '../api/autores';
 import Modal from '../components/Modal';
+import { confirmDialog } from '../components/ConfirmDialog';
 
 const EMPTY = { ID: '', Autor: '' };
 
@@ -67,7 +68,7 @@ function Autores() {
   };
 
   const handleDelete = async (id) => {
-    if (!confirm('¿Eliminar este autor? Esta acción no se puede deshacer.')) return;
+    if (!(await confirmDialog('¿Eliminar este autor? Esta acción no se puede deshacer.'))) return;
     try {
       await deleteAutor(id.trim());
       load();

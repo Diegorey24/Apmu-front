@@ -4,6 +4,7 @@ import { getBeneficios, createBeneficio, deleteBeneficio, getListadoCanastas, ge
 import { searchAfiliados } from '../api/afiliados';
 import { getHijos } from '../api/hijos';
 import Modal from '../components/Modal';
+import { confirmDialog } from '../components/ConfirmDialog';
 import { formatFecha } from '../utils/fecha';
 
 const anioActual = new Date().getFullYear();
@@ -116,7 +117,7 @@ export default function Beneficios() {
     };
 
     const eliminar = async (b) => {
-        if (!confirm(`¿Eliminar este beneficio?`)) return;
+        if (!(await confirmDialog(`¿Eliminar este beneficio?`))) return;
         try {
             await deleteBeneficio(b.Id);
             cargar({ tipo: filtroTipo || undefined, anio: filtroAnio || undefined });

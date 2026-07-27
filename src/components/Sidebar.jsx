@@ -32,9 +32,11 @@ const grupos = [
     label: 'Finanzas',
     links: [
       { to: '/cuenta-corriente', label: 'Aportes' },
-      { to: '/cajachica', label: 'Caja chica' },
+      { to: '/cajachica', label: 'Fondo Fijo' },
       { to: '/banco', label: 'Banco' },
       { to: '/creditos', label: 'Créditos Históricos CPMU' },
+      { to: '/rubros-contables', label: 'Rubros contables' },
+      { to: '/centros-costo', label: 'Centros de costo' },
     ],
   },
   {

@@ -4,6 +4,7 @@ import { getMotivosBaja } from '../api/motivosbaja';
 import { getCuentaCorriente, createCargo } from '../api/cuentacorriente';
 import { getRubros } from '../api/rubros';
 import Modal from '../components/Modal';
+import { confirmDialog } from '../components/ConfirmDialog';
 import { useNavigate } from 'react-router-dom';
 import { validate_ci, validate_mail, validate_celular } from '../utils/validaciones';
 import { getCategorias } from '../api/categorias';
@@ -351,7 +352,7 @@ function Afiliados() {
   };
 
   const eliminarHijo = async (id) => {
-    if (!confirm('¿Eliminar este hijo?')) return;
+    if (!(await confirmDialog('¿Eliminar este hijo?'))) return;
     try {
       await deleteHijo(id);
       loadHijos(modal.record.Id);
@@ -468,7 +469,7 @@ function Afiliados() {
                       </>
                     ) : (
                       <button className="btn-sm" onClick={async () => {
-                        if (!confirm(`¿Reactivar a ${nombreCompleto(a)}?`)) return;
+                        if (!(await confirmDialog(`¿Reactivar a ${nombreCompleto(a)}?`))) return;
                         try {
                           await reactivarAfiliado(a.Id);
                           load(page, search);
