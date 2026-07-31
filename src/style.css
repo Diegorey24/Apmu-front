@@ -816,12 +816,24 @@ tbody tr:hover {
 }
 
 /* ── Impresión ── */
+.print-title {
+  display: none;
+}
+
 @media print {
   .topbar,
   .sidebar,
   .sidebar-overlay,
   .no-print {
     display: none !important;
+  }
+
+  .print-title {
+    display: block !important;
+    text-align: center;
+    font-size: 20px;
+    font-weight: 700;
+    margin: 0 0 16px;
   }
 
   .layout,

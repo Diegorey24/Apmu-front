@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import * as XLSX from 'xlsx';
 import { getCreditos, getCreditoById } from '../api/creditos';
 import Modal from '../components/Modal';
 import { formatFecha } from '../utils/fecha';
@@ -76,6 +77,27 @@ export default function Creditos() {
 
   const formatMonto = (m) => m != null ? `$ ${Number(m).toLocaleString('es-UY', { minimumFractionDigits: 2 })}` : '—';
 
+  const exportarExcel = () => {
+    const filas = creditos.map(c => ({
+      'Nº crédito': c.Numero,
+      Socio: c.NombreSocio || c.Cliente_Id,
+      Tipo: c.TipoSolicitud,
+      Finalidad: c.Finalidad,
+      Capital: c.CapitalInicial ?? '',
+      'Cuotas pagas': c.CuotasPagas,
+      'Cuotas totales': c.CantidadCuotas,
+      Saldo: c.SaldoCapital ?? '',
+      Estado: c.Estado,
+      'Fecha otorgado': c.FechaOtorgado ? c.FechaOtorgado.substring(0, 10) : '',
+    }));
+    const hoja = XLSX.utils.json_to_sheet(filas);
+    const libro = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(libro, hoja, 'Créditos Históricos');
+    XLSX.writeFile(libro, 'creditos_historicos_cpmu.xlsx');
+  };
+
+  const imprimir = () => window.print();
+
   return (
     <div className="page">
       <div className="page-header">
@@ -105,10 +127,14 @@ export default function Creditos() {
         </div>
         <button className="btn-primary btn-inline" onClick={aplicarFiltros}>Buscar</button>
         <button className="btn-sm" style={{ padding: '9px 18px', fontSize: 14 }} onClick={limpiarFiltros}>Limpiar</button>
+        <button className="btn-sm no-print" onClick={exportarExcel}>Exportar Excel</button>
+        <button className="btn-sm no-print" onClick={imprimir}>Imprimir</button>
       </div>
 
       {loading ? <p>Cargando...</p> : (
         <>
+          <div className="print-area">
+          <h2 className="print-title">CRÉDITOS HISTÓRICOS CPMU</h2>
           <table className="tabla">
             <thead>
               <tr>
@@ -121,7 +147,7 @@ export default function Creditos() {
                 <th>Saldo</th>
                 <th>Estado</th>
                 <th>Fecha otorgado</th>
-                <th></th>
+                <th className="no-print"></th>
               </tr>
             </thead>
             <tbody>
@@ -145,6 +171,7 @@ export default function Creditos() {
               ))}
             </tbody>
           </table>
+          </div>
 
           {totalPages > 1 && (
             <div className="pagination">

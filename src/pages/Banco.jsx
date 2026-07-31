@@ -226,6 +226,7 @@ function Banco() {
       </div>
 
       <div className="table-wrapper print-area">
+        <h2 className="print-title">BANCO</h2>
         <table>
           <thead>
             <tr>

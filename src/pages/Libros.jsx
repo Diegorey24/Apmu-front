@@ -163,11 +163,14 @@ export default function Libros() {
         )}
         <button className="btn-primary btn-inline" onClick={aplicarFiltros}>Buscar</button>
         <button className="btn-sm" onClick={limpiarFiltros}>Limpiar</button>
+        <button className="btn-sm no-print" onClick={() => window.print()}>Imprimir</button>
       </div>
 
       {loading ? (
         <p>Cargando...</p>
       ) : (
+        <div className="print-area">
+        <h2 className="print-title">LISTADO DE LIBROS</h2>
         <table className="tabla">
           <thead>
             <tr>
@@ -181,7 +184,7 @@ export default function Libros() {
               <th>Stock</th>
               <th>Costo</th>
               <th>Estado</th>
-              <th>Acciones</th>
+              <th className="no-print">Acciones</th>
             </tr>
           </thead>
           <tbody>
@@ -200,7 +203,7 @@ export default function Libros() {
                   <td>{l.Stock}</td>
                   <td>{l.Tipo === 'Estudio' && l.Costo ? `$ ${Number(l.Costo).toFixed(2)}` : '—'}</td>
                   <td>{l.FechaBaja ? 'Baja' : 'Activo'}</td>
-                  <td>
+                  <td className="no-print">
                     <button className="btn-sm" onClick={() => abrirEditar(l)}>Editar</button>
                     <button
                       className={`btn-sm ${l.FechaBaja ? '' : 'danger'}`}
@@ -214,7 +217,7 @@ export default function Libros() {
             )}
           </tbody>
         </table>
-
+        </div>
 
       )}
 

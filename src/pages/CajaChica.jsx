@@ -410,6 +410,7 @@ function CajaChica() {
           </div>
 
           <div className="table-wrapper print-area">
+            <h2 className="print-title">FONDO FIJO</h2>
             <table>
               <thead>
                 <tr>

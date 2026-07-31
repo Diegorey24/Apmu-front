@@ -204,7 +204,9 @@ export default function PrestamosArticulos() {
       </div>
 
       {loading ? <p>Cargando...</p> : (
-        <table className="tabla print-area">
+        <div className="print-area">
+        <h2 className="print-title">PRÉSTAMO ART. DISCAPACIDAD</h2>
+        <table className="tabla">
           <thead>
             <tr>
               <th>Fecha préstamo</th>
@@ -245,6 +247,7 @@ export default function PrestamosArticulos() {
             ))}
           </tbody>
         </table>
+        </div>
       )}
 
       <Modal isOpen={modalOpen} onClose={() => setModalOpen(false)}

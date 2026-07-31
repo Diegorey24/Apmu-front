@@ -173,7 +173,9 @@ export default function LicenciasGremiales() {
             </div>
 
             {loading ? <p>Cargando...</p> : (
-                <table className="tabla print-area">
+                <div className="print-area">
+                <h2 className="print-title">LICENCIAS GREMIALES</h2>
+                <table className="tabla">
                     <thead>
                         <tr>
                             <th>Afiliado</th>
@@ -208,6 +210,7 @@ export default function LicenciasGremiales() {
                         ))}
                     </tbody>
                 </table>
+                </div>
             )}
 
             <Modal isOpen={modalOpen} onClose={() => setModalOpen(false)}
