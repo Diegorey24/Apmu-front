@@ -4,7 +4,8 @@ import Modal from '../components/Modal';
 import { confirmDialog } from '../components/ConfirmDialog';
 
 const TIPOS = ['Central', 'Sucursal', 'Filial'];
-const FORM_VACIO = { tipo: 'Central', nombre: '' };
+const TIPOS_CUENTA = ['Caja de ahorro', 'Cuenta corriente'];
+const FORM_VACIO = { tipo: 'Central', nombre: '', nroCuenta: '', tipoCuenta: '', banco: '' };
 
 export default function Ubicaciones() {
     const [ubicaciones, setUbicaciones] = useState([]);
@@ -36,7 +37,10 @@ export default function Ubicaciones() {
 
     const abrirEditar = (u) => {
         setEditando(u);
-        setForm({ tipo: u.Tipo, nombre: u.Nombre });
+        setForm({
+            tipo: u.Tipo, nombre: u.Nombre,
+            nroCuenta: u.NroCuenta || '', tipoCuenta: u.TipoCuenta || '', banco: u.Banco || '',
+        });
         setError('');
         setModalOpen(true);
     };
@@ -114,6 +118,31 @@ export default function Ubicaciones() {
                         onChange={e => setField('nombre', e.target.value)}
                         onKeyDown={e => e.key === 'Enter' && guardar()} />
                 </div>
+
+                {form.tipo === 'Filial' && (
+                    <>
+                        <p className="section-title">Datos bancarios</p>
+                        <div className="form-group">
+                            <label>Banco</label>
+                            <input className="form-control" value={form.banco}
+                                onChange={e => setField('banco', e.target.value)} />
+                        </div>
+                        <div className="form-group">
+                            <label>Tipo de cuenta</label>
+                            <select className="form-control" value={form.tipoCuenta}
+                                onChange={e => setField('tipoCuenta', e.target.value)}>
+                                <option value="">— Seleccioná —</option>
+                                {TIPOS_CUENTA.map(t => <option key={t} value={t}>{t}</option>)}
+                            </select>
+                        </div>
+                        <div className="form-group">
+                            <label>Nº de cuenta</label>
+                            <input className="form-control" value={form.nroCuenta}
+                                onChange={e => setField('nroCuenta', e.target.value)} />
+                        </div>
+                    </>
+                )}
+
                 {error && <span className="error">{error}</span>}
                 <div className="modal-actions">
                     <button className="btn-sm" onClick={() => setModalOpen(false)}>Cancelar</button>

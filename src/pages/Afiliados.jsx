@@ -474,11 +474,13 @@ function Afiliados() {
         >
           {verInactivos ? 'Ver activos' : 'Ver dados de baja'}
         </button>
+        <button className="btn-sm no-print" onClick={() => window.print()}>Imprimir</button>
       </div>
 
       {pageError && <p className="alert alert-error">{pageError}</p>}
 
-      <div className="table-wrapper">
+      <div className="table-wrapper print-area">
+        <h2 className="print-title">Afiliados APMU {new Date().getFullYear()}</h2>
         <table>
           <thead>
             <tr>
@@ -490,7 +492,7 @@ function Afiliados() {
               <th>Mail</th>
               <th>Categoría</th>
               <th>Ubicación</th>
-              <th>Acciones</th>
+              <th className="no-print">Acciones</th>
             </tr>
           </thead>
           <tbody>
@@ -508,7 +510,7 @@ function Afiliados() {
                 <td>{a.Mail || '—'}</td>
                 <td>{a.NombreCategoria || '—'}</td>
                 <td>{a.NombreUbicacion || '—'}</td>
-                <td>
+                <td className="no-print">
                   <div className="td-actions">
                     {!verInactivos ? (
                       <>
@@ -664,6 +666,9 @@ function Afiliados() {
                     <p style={{ margin: '2px 0' }}>Correo: {ubicacionSeleccionada.Correo || '—'}</p>
                     <p style={{ margin: '2px 0' }}>Teléfono: {ubicacionSeleccionada.Telefono || '—'}</p>
                     <p style={{ margin: '2px 0' }}>Empresa de envío: {ubicacionSeleccionada.EmpresaEnvio || '—'}</p>
+                    <p style={{ margin: '2px 0' }}>Banco: {ubicacionSeleccionada.Banco || '—'}</p>
+                    <p style={{ margin: '2px 0' }}>Tipo de cuenta: {ubicacionSeleccionada.TipoCuenta || '—'}</p>
+                    <p style={{ margin: '2px 0' }}>Nº de cuenta: {ubicacionSeleccionada.NroCuenta || '—'}</p>
                   </div>
                 </div>
               )}

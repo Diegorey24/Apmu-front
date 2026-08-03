@@ -18,12 +18,10 @@ export default function Beneficios() {
     // Listado canastas
     const [listadoCanastas, setListadoCanastas] = useState([]);
     const [loadingCanastas, setLoadingCanastas] = useState(false);
-    const [anioCanastas, setAnioCanastas] = useState(String(anioActual));
 
     // Listado útiles
     const [listadoUtiles, setListadoUtiles] = useState([]);
     const [loadingUtiles, setLoadingUtiles] = useState(false);
-    const [anioUtiles, setAnioUtiles] = useState(String(anioActual));
     const [modalOpen, setModalOpen] = useState(false);
     const [form, setForm] = useState({
         idAfiliado: '', tipo: 'Canasta', anio: anioActual,
@@ -126,20 +124,20 @@ export default function Beneficios() {
         }
     };
 
-    const cargarCanastas = async (anio = anioCanastas) => {
+    const cargarCanastas = async () => {
         setLoadingCanastas(true);
         try {
-            const res = await getListadoCanastas({ anio: anio || undefined });
+            const res = await getListadoCanastas();
             setListadoCanastas(res.data.data || []);
         } finally {
             setLoadingCanastas(false);
         }
     };
 
-    const cargarUtiles = async (anio = anioUtiles) => {
+    const cargarUtiles = async () => {
         setLoadingUtiles(true);
         try {
-            const res = await getListadoUtiles({ anio: anio || undefined });
+            const res = await getListadoUtiles();
             setListadoUtiles(res.data.data || []);
         } finally {
             setLoadingUtiles(false);
@@ -148,8 +146,8 @@ export default function Beneficios() {
 
     const cambiarTab = (t) => {
         setTab(t);
-        if (t === 'canastas' && listadoCanastas.length === 0) cargarCanastas();
-        if (t === 'utiles' && listadoUtiles.length === 0) cargarUtiles();
+        if (t === 'canastas') cargarCanastas();
+        if (t === 'utiles') cargarUtiles();
     };
 
     const exportarCanastasExcel = () => {
@@ -175,6 +173,7 @@ export default function Beneficios() {
             'F. Nac.': r.FechaNacimiento ? r.FechaNacimiento.substring(0, 10) : '',
             Edad: r.Edad ?? '',
             Género: r.Sexo || '',
+            Discapacidad: r.Discapacidad ? 'Sí' : 'No',
             Ubicación: r.Ubicacion || '',
         }));
         const hoja = XLSX.utils.json_to_sheet(filas);
@@ -267,15 +266,7 @@ export default function Beneficios() {
             {tab === 'canastas' && (
                 <>
                     <div className="toolbar no-print" style={{ flexWrap: 'wrap', alignItems: 'flex-end' }}>
-                        <div className="form-group" style={{ margin: 0 }}>
-                            <label>Año</label>
-                            <select className="form-control" value={anioCanastas}
-                                onChange={e => setAnioCanastas(e.target.value)}>
-                                <option value="">Todos</option>
-                                {anios.map(a => <option key={a} value={a}>{a}</option>)}
-                            </select>
-                        </div>
-                        <button className="btn-primary btn-inline" onClick={() => cargarCanastas()}>Buscar</button>
+                        <button className="btn-sm" onClick={() => cargarCanastas()}>Actualizar</button>
                         <button className="btn-sm" onClick={exportarCanastasExcel}>Exportar Excel</button>
                         <button className="btn-sm" onClick={imprimir}>Imprimir</button>
                     </div>
@@ -314,15 +305,7 @@ export default function Beneficios() {
             {tab === 'utiles' && (
                 <>
                     <div className="toolbar no-print" style={{ flexWrap: 'wrap', alignItems: 'flex-end' }}>
-                        <div className="form-group" style={{ margin: 0 }}>
-                            <label>Año</label>
-                            <select className="form-control" value={anioUtiles}
-                                onChange={e => setAnioUtiles(e.target.value)}>
-                                <option value="">Todos</option>
-                                {anios.map(a => <option key={a} value={a}>{a}</option>)}
-                            </select>
-                        </div>
-                        <button className="btn-primary btn-inline" onClick={() => cargarUtiles()}>Buscar</button>
+                        <button className="btn-sm" onClick={() => cargarUtiles()}>Actualizar</button>
                         <button className="btn-sm" onClick={exportarUtilesExcel}>Exportar Excel</button>
                         <button className="btn-sm" onClick={imprimir}>Imprimir</button>
                     </div>
@@ -338,12 +321,13 @@ export default function Beneficios() {
                                     <th>F. Nac.</th>
                                     <th>Edad</th>
                                     <th>Género</th>
+                                    <th>Discapacidad</th>
                                     <th>Ubicación</th>
                                 </tr>
                             </thead>
                             <tbody>
                                 {listadoUtiles.length === 0 ? (
-                                    <tr><td colSpan={8}>No hay registros</td></tr>
+                                    <tr><td colSpan={9}>No hay registros</td></tr>
                                 ) : listadoUtiles.map((r, i) => (
                                     <tr key={i}>
                                         <td>{r.NroFuncionario || '—'}</td>
@@ -353,6 +337,7 @@ export default function Beneficios() {
                                         <td>{formatFecha(r.FechaNacimiento)}</td>
                                         <td>{r.Edad ?? '—'}</td>
                                         <td>{r.Sexo || '—'}</td>
+                                        <td>{r.Discapacidad ? 'Sí' : 'No'}</td>
                                         <td>{r.Ubicacion || '—'}</td>
                                     </tr>
                                 ))}
