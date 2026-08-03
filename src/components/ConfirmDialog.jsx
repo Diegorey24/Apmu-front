@@ -29,17 +29,19 @@ function ConfirmDialogHost() {
   };
 
   return (
-    <Modal title={request.title || 'Confirmar'} onClose={() => responder(false)}>
-      <p style={{ margin: 0 }}>{request.message}</p>
-      <div className="modal-footer">
-        <button type="button" className="btn-sm btn-cancel" onClick={() => responder(false)}>
-          {request.cancelText || 'Cancelar'}
-        </button>
-        <button type="button" className="btn-primary btn-inline" onClick={() => responder(true)} autoFocus>
-          {request.confirmText || 'Confirmar'}
-        </button>
-      </div>
-    </Modal>
+    <div className="confirm-dialog-host">
+      <Modal title={request.title || 'Confirmar'} onClose={() => responder(false)}>
+        <p style={{ margin: 0 }}>{request.message}</p>
+        <div className="modal-footer">
+          <button type="button" className="btn-sm btn-cancel" onClick={() => responder(false)}>
+            {request.cancelText || 'Cancelar'}
+          </button>
+          <button type="button" className="btn-primary btn-inline" onClick={() => responder(true)} autoFocus>
+            {request.confirmText || 'Confirmar'}
+          </button>
+        </div>
+      </Modal>
+    </div>
   );
 }
 

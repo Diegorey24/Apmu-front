@@ -578,6 +578,10 @@ tbody tr:hover {
   max-width: 760px;
 }
 
+.confirm-dialog-host .modal-backdrop {
+  z-index: 300;
+}
+
 .modal-header {
   display: flex;
   align-items: center;

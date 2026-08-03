@@ -9,7 +9,7 @@ import { useNavigate } from 'react-router-dom';
 import { validate_ci, validate_mail, validate_celular } from '../utils/validaciones';
 import { getCategorias } from '../api/categorias';
 import { getUbicaciones } from '../api/ubicaciones';
-import { getHijos, createHijo, updateHijo, validarHijo, deleteHijo } from '../api/hijos';
+import { getHijos, createHijo, updateHijo, validarHijo, deleteHijo, cambiarTitularHijo } from '../api/hijos';
 import { getConfiguracion, updateConfiguracion } from '../api/configuracion';
 
 
@@ -72,6 +72,14 @@ function Afiliados() {
   const [afiliadoMadreEncontrado, setAfiliadoMadreEncontrado] = useState(null);
   const timeoutPadreRef = useRef(null);
   const timeoutMadreRef = useRef(null);
+
+  // Cambiar titular de un hijo
+  const [modalTitular, setModalTitular] = useState(null); // null | hijo
+  const [busquedaTitular, setBusquedaTitular] = useState('');
+  const [sugerenciasTitular, setSugerenciasTitular] = useState([]);
+  const [afiliadoTitularSeleccionado, setAfiliadoTitularSeleccionado] = useState(null);
+  const [errorTitular, setErrorTitular] = useState('');
+  const timeoutTitularRef = useRef(null);
   const [verInactivos, setVerInactivos] = useState(false);
 
   // Configuración: fecha de corte para edad de hijos
@@ -329,6 +337,9 @@ function Afiliados() {
   const guardarHijo = async () => {
     if (!formHijo.primerNombre.trim()) { setErrorHijo('El primer nombre es obligatorio'); return; }
     if (!formHijo.primerApellido.trim()) { setErrorHijo('El primer apellido es obligatorio'); return; }
+    if (!formHijo.documento.trim()) { setErrorHijo('La cédula (CI) es obligatoria'); return; }
+    if (!validate_ci(formHijo.documento)) { setErrorHijo('La cédula (CI) no es válida'); return; }
+    if (!formHijo.fechaNacimiento) { setErrorHijo('La fecha de nacimiento es obligatoria'); return; }
     try {
       if (modalHijo === 'crear') {
         await createHijo({ ...formHijo, idAfiliado: modal.record.Id });
@@ -358,6 +369,44 @@ function Afiliados() {
       loadHijos(modal.record.Id);
     } catch (err) {
       alert(err.response?.data?.message || 'Error');
+    }
+  };
+
+  const abrirCambiarTitular = (hijo) => {
+    setBusquedaTitular('');
+    setSugerenciasTitular([]);
+    setAfiliadoTitularSeleccionado(null);
+    setErrorTitular('');
+    setModalTitular(hijo);
+  };
+
+  const onBusquedaTitular = (valor) => {
+    setBusquedaTitular(valor);
+    setAfiliadoTitularSeleccionado(null);
+    clearTimeout(timeoutTitularRef.current);
+    if (valor.length < 2) { setSugerenciasTitular([]); return; }
+    timeoutTitularRef.current = setTimeout(async () => {
+      const res = await searchAfiliados(valor);
+      setSugerenciasTitular(res.data.data || []);
+    }, 300);
+  };
+
+  const seleccionarAfiliadoTitular = (afiliado) => {
+    setAfiliadoTitularSeleccionado(afiliado);
+    setBusquedaTitular(
+      `${afiliado.PrimerNombre} ${afiliado.PrimerApellido}${afiliado.SegundoApellido ? ' ' + afiliado.SegundoApellido : ''} — ${afiliado.Documento}`
+    );
+    setSugerenciasTitular([]);
+  };
+
+  const confirmarCambiarTitular = async () => {
+    if (!afiliadoTitularSeleccionado) { setErrorTitular('Seleccioná un afiliado'); return; }
+    try {
+      await cambiarTitularHijo(modalTitular.Id, afiliadoTitularSeleccionado.Id);
+      setModalTitular(null);
+      loadHijos(modal.record.Id);
+    } catch (err) {
+      setErrorTitular(err.response?.data?.message || 'Error al cambiar el titular');
     }
   };
 
@@ -782,6 +831,7 @@ function Afiliados() {
                               <button type="button" className="btn-sm" onClick={() => toggleValidarHijo(h)}>
                                 {h.Validado ? 'Desvalidar' : 'Validar'}
                               </button>
+                              <button type="button" className="btn-sm" onClick={() => abrirCambiarTitular(h)}>Cambiar titular</button>
                               {h.VinculadoA !== 'secundario' && (
                                 <button type="button" className="btn-sm danger" onClick={() => eliminarHijo(h.Id)}>Eliminar</button>
                               )}
@@ -934,12 +984,12 @@ function Afiliados() {
                   onChange={e => setFormHijo(f => ({ ...f, segundoApellido: e.target.value }))} />
               </div>
               <div className="form-group">
-                <label>Documento (CI)</label>
+                <label>Documento (CI) *</label>
                 <input className="form-control" value={formHijo.documento}
                   onChange={e => setFormHijo(f => ({ ...f, documento: e.target.value }))} />
               </div>
               <div className="form-group">
-                <label>Fecha de nacimiento</label>
+                <label>Fecha de nacimiento *</label>
                 <input type="date" className="form-control" value={formHijo.fechaNacimiento}
                   onChange={e => setFormHijo(f => ({ ...f, fechaNacimiento: e.target.value }))} />
               </div>
@@ -949,7 +999,7 @@ function Afiliados() {
                   onChange={e => onCedulaPadreChange(e.target.value)} />
                 {afiliadoPadreEncontrado && (
                   <small style={{ color: 'var(--accent)', fontSize: 12 }}>
-                    Se encontró al afiliado {afiliadoPadreEncontrado.PrimerNombre} {afiliadoPadreEncontrado.PrimerApellido} con esta CI. El hijo quedará vinculado a ambos.
+                    Se encontró al afiliado {afiliadoPadreEncontrado.PrimerNombre} {afiliadoPadreEncontrado.PrimerApellido} con esta CI.
                   </small>
                 )}
               </div>
@@ -959,7 +1009,7 @@ function Afiliados() {
                   onChange={e => onCedulaMadreChange(e.target.value)} />
                 {afiliadoMadreEncontrado && (
                   <small style={{ color: 'var(--accent)', fontSize: 12 }}>
-                    Se encontró al afiliado {afiliadoMadreEncontrado.PrimerNombre} {afiliadoMadreEncontrado.PrimerApellido} con esta CI. El hijo quedará vinculado a ambos.
+                    Se encontró al afiliado {afiliadoMadreEncontrado.PrimerNombre} {afiliadoMadreEncontrado.PrimerApellido} con esta CI.
                   </small>
                 )}
               </div>
@@ -993,6 +1043,57 @@ function Afiliados() {
             <div className="modal-actions">
               <button className="btn-sm" onClick={() => setModalHijo(null)}>Cancelar</button>
               <button className="btn-primary btn-inline" onClick={guardarHijo}>Guardar</button>
+            </div>
+          </>
+        )}
+      </Modal>
+
+      <Modal isOpen={!!modalTitular} onClose={() => setModalTitular(null)} title="Cambiar titular">
+        {modalTitular && (
+          <>
+            <p style={{ marginBottom: 12, fontSize: 13 }}>
+              Reasignar a <strong>{modalTitular.PrimerNombre} {modalTitular.PrimerApellido}</strong> como hijo de otro afiliado.
+              El afiliado actual perderá la vinculación con este hijo.
+            </p>
+            <div className="form-group" style={{ position: 'relative' }}>
+              <label>Nuevo afiliado titular *</label>
+              <input
+                className="form-control"
+                placeholder="Buscá por nombre o nro. de funcionario..."
+                value={busquedaTitular}
+                onChange={e => onBusquedaTitular(e.target.value)}
+                autoFocus
+              />
+              {sugerenciasTitular.length > 0 && (
+                <div style={{
+                  position: 'absolute', top: '100%', left: 0, right: 0,
+                  background: 'var(--card-bg)',
+                  border: '1px solid var(--border)',
+                  borderRadius: 6, zIndex: 100, maxHeight: 200, overflowY: 'auto'
+                }}>
+                  {sugerenciasTitular.map(a => (
+                    <div key={a.Id}
+                      onClick={() => seleccionarAfiliadoTitular(a)}
+                      style={{
+                        padding: '8px 12px', cursor: 'pointer',
+                        borderBottom: '1px solid var(--border)'
+                      }}
+                      onMouseEnter={e => e.currentTarget.style.background = 'var(--bg)'}
+                      onMouseLeave={e => e.currentTarget.style.background = ''}
+                    >
+                      <strong>{a.PrimerNombre} {a.PrimerApellido} {a.SegundoApellido}</strong>
+                      <span style={{ marginLeft: 8, color: 'var(--text)', fontSize: 13 }}>
+                        {a.Documento} {a.NroFuncionario ? `· Func. ${a.NroFuncionario}` : ''}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+            {errorTitular && <span className="error" style={{ display: 'block', marginTop: 8 }}>{errorTitular}</span>}
+            <div className="modal-actions">
+              <button className="btn-sm" onClick={() => setModalTitular(null)}>Cancelar</button>
+              <button className="btn-primary btn-inline" onClick={confirmarCambiarTitular}>Confirmar</button>
             </div>
           </>
         )}
