@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect } from 'react';
 import { searchAfiliados } from '../api/afiliados';
 import { getRubros } from '../api/rubros';
-import { getDeudaAfiliado, getConciliacion, exportarAfiliados, exportarBajas, exportarAportes, exportarPrestamos, exportarLicencias, exportarDeudoresLibros, exportarListadoLibros } from '../api/reportes';
+import { getDeudaAfiliado, getConciliacion, exportarAfiliados, exportarBajas, exportarAportes, exportarPrestamos, exportarLicencias, getDeudoresLibros, exportarDeudoresLibros, exportarListadoLibros } from '../api/reportes';
 import { formatFecha } from '../utils/fecha';
 
 const meses = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Set', 'Oct', 'Nov', 'Dic'];
@@ -61,6 +61,9 @@ export default function Reportes() {
   const [fechaBajaHasta, setFechaBajaHasta] = useState('');
   const [fechaDeudoresDesde, setFechaDeudoresDesde] = useState('');
   const [fechaDeudoresHasta, setFechaDeudoresHasta] = useState('');
+  const [deudoresLibros, setDeudoresLibros] = useState(null);
+  const [loadingDeudores, setLoadingDeudores] = useState(false);
+  const [errorDeudores, setErrorDeudores] = useState('');
   const [fechaLibrosDesde, setFechaLibrosDesde] = useState('');
   const [fechaLibrosHasta, setFechaLibrosHasta] = useState('');
 
@@ -179,6 +182,19 @@ export default function Reportes() {
       const res = await exportarDeudoresLibros(fechaDeudoresDesde, fechaDeudoresHasta);
       descargar(res.data, 'deudores_libros.xlsx');
     } catch { alert('Error al exportar'); }
+  };
+
+  const handleVerDeudoresLibros = async () => {
+    setLoadingDeudores(true);
+    setErrorDeudores('');
+    try {
+      const res = await getDeudoresLibros(fechaDeudoresDesde, fechaDeudoresHasta);
+      setDeudoresLibros(res.data.data);
+    } catch {
+      setErrorDeudores('Error al obtener el listado');
+    } finally {
+      setLoadingDeudores(false);
+    }
   };
 
   const handleExportarListadoLibros = async () => {
@@ -489,7 +505,50 @@ export default function Reportes() {
                   onChange={e => setFechaDeudoresHasta(e.target.value)} />
               </div>
             </div>
-            <button className="btn-primary btn-inline" onClick={handleExportarDeudoresLibros}>Exportar Excel</button>
+            <div style={{ display: 'flex', gap: 8 }}>
+              <button className="btn-primary btn-inline" onClick={handleExportarDeudoresLibros}>Exportar Excel</button>
+              <button className="btn-sm" onClick={handleVerDeudoresLibros}>Ver listado</button>
+            </div>
+
+            {loadingDeudores && <p style={{ marginTop: 12 }}>Cargando...</p>}
+            {errorDeudores && <p style={{ marginTop: 12, color: 'var(--error)' }}>{errorDeudores}</p>}
+
+            {deudoresLibros && (
+              deudoresLibros.length === 0 ? (
+                <p style={{ marginTop: 12, color: 'var(--text)' }}>No hay préstamos vencidos sin devolver.</p>
+              ) : (
+                <div style={{ overflowX: 'auto', marginTop: 12 }}>
+                  <table className="tabla">
+                    <thead>
+                      <tr>
+                        <th>Nº funcionario</th>
+                        <th>Nombre</th>
+                        <th>Apellido</th>
+                        <th>Celular</th>
+                        <th>Teléfono</th>
+                        <th>Fecha préstamo</th>
+                        <th>Fecha vencimiento</th>
+                        <th>Libro</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {deudoresLibros.map((d, i) => (
+                        <tr key={i}>
+                          <td>{d.NroFuncionario || '—'}</td>
+                          <td>{d.PrimerNombre}</td>
+                          <td>{d.PrimerApellido}</td>
+                          <td>{d.Celular?.trim() || '—'}</td>
+                          <td>{d.Telefono?.trim() || '—'}</td>
+                          <td>{formatFecha(d.FechaPrestamo)}</td>
+                          <td>{formatFecha(d.FechaVencimiento)}</td>
+                          <td>{d.Libro}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )
+            )}
           </div>
 
           <div style={{ background: 'var(--card-bg)', border: '1px solid var(--border)', borderRadius: 12, padding: 20 }}>

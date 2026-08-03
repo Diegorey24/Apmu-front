@@ -11,6 +11,8 @@ export const exportarBajas = (fechaDesde, fechaHasta) =>
 export const exportarAportes = (aniomes) => client.get('/reportes/exportar/aportes', { params: { aniomes }, responseType: 'blob' });
 export const exportarPrestamos = () => client.get('/reportes/exportar/prestamos', { responseType: 'blob' });
 export const exportarLicencias = (fechaDesde, fechaHasta) => client.get('/reportes/exportar/licencias', { params: { fechaDesde, fechaHasta }, responseType: 'blob' });
+export const getDeudoresLibros = (fechaDesde, fechaHasta) =>
+  client.get('/reportes/deudores-libros', { params: { fechaDesde, fechaHasta } });
 export const exportarDeudoresLibros = (fechaDesde, fechaHasta) =>
   client.get('/reportes/exportar/deudores-libros', { params: { fechaDesde, fechaHasta }, responseType: 'blob' });
 export const exportarListadoLibros = (fechaDesde, fechaHasta) =>
