@@ -1,7 +1,11 @@
 import { Navigate } from 'react-router-dom';
+import { hasValidToken, clearSession } from '../utils/auth';
 
 function ProtectedRoute({ children }) {
-  if (!localStorage.getItem('apmu_token')) return <Navigate to="/login" replace />;
+  if (!hasValidToken()) {
+    clearSession();
+    return <Navigate to="/login" replace />;
+  }
   return children;
 }
 

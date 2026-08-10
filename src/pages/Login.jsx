@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { login } from '../api/auth';
+import { setSession, hasValidToken } from '../utils/auth';
 import apmuLogo from '../assets/apmu-5.jpg';
 
 function Login() {
@@ -11,7 +12,7 @@ function Login() {
   const navigate = useNavigate();
 
   useEffect(() => {
-    if (localStorage.getItem('apmu_token')) navigate('/', { replace: true });
+    if (hasValidToken()) navigate('/', { replace: true });
   }, [navigate]);
 
   const handleSubmit = async (e) => {
@@ -20,9 +21,9 @@ function Login() {
     setLoading(true);
     try {
       const response = await login(username, password);
-      const token = response.data.data.access_token;
-      localStorage.setItem('apmu_token', token);
-      navigate('/', { replace: true });
+      const { token, rol } = response.data.data;
+      setSession({ token, rol });
+      navigate(rol === 'Consulta' ? '/afiliados' : '/', { replace: true });
     } catch (err) {
       setError(err.response?.data?.message || 'Usuario o contraseña incorrectos.');
     } finally {

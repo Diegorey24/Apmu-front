@@ -11,6 +11,7 @@ import { getCategorias } from '../api/categorias';
 import { getUbicaciones } from '../api/ubicaciones';
 import { getHijos, createHijo, updateHijo, validarHijo, deleteHijo, cambiarTitularHijo } from '../api/hijos';
 import { getConfiguracion, updateConfiguracion } from '../api/configuracion';
+import { getRole } from '../utils/auth';
 
 
 const LIMIT = 20;
@@ -33,6 +34,7 @@ const nombreCompleto = (a) =>
     .filter(Boolean).join(' ');
 
 function Afiliados() {
+  const esConsulta = getRole() === 'Consulta';
   const navigate = useNavigate();
   const [data, setData] = useState([]);
   const [total, setTotal] = useState(0);
@@ -452,7 +454,9 @@ function Afiliados() {
     <div className="page">
       <div className="page-header">
         <h2 className="page-title">Afiliados</h2>
-        <button className="btn-primary btn-inline" onClick={openCreate}>+ Nuevo afiliado</button>
+        {!esConsulta && (
+          <button className="btn-primary btn-inline" onClick={openCreate}>+ Nuevo afiliado</button>
+        )}
       </div>
 
       <div className="toolbar">
@@ -512,7 +516,9 @@ function Afiliados() {
                 <td>{a.NombreUbicacion || '—'}</td>
                 <td className="no-print">
                   <div className="td-actions">
-                    {!verInactivos ? (
+                    {esConsulta ? (
+                      <button className="btn-sm" onClick={() => openEdit(a)}>Ver</button>
+                    ) : !verInactivos ? (
                       <>
                         <button className="btn-sm" onClick={() => openEdit(a)}>Editar</button>
                         <button className="btn-sm danger" onClick={() => abrirModalBaja(a)}>Dar de baja</button>
@@ -547,11 +553,12 @@ function Afiliados() {
 
       {modal && (
         <Modal
-          title={modal.mode === 'create' ? 'Nuevo afiliado' : 'Editar afiliado'}
+          title={esConsulta ? 'Ficha de afiliado (solo lectura)' : modal.mode === 'create' ? 'Nuevo afiliado' : 'Editar afiliado'}
           onClose={closeModal}
           size="lg"
         >
           <form onSubmit={handleSave}>
+            <fieldset disabled={esConsulta} style={{ border: 0, padding: 0, margin: 0 }}>
             <div className="form-grid">
 
               <p className="section-title">Datos personales</p>
@@ -849,14 +856,17 @@ function Afiliados() {
                 )}
               </div>
             </div>
+            </fieldset>
 
             {formError && <p className="alert alert-error" style={{ marginTop: '16px' }}>{formError}</p>}
 
             <div className="modal-footer">
-              <button type="button" className="btn-sm btn-cancel" onClick={closeModal}>Cancelar</button>
-              <button type="submit" className="btn-primary btn-inline" disabled={saving}>
-                {saving ? 'Guardando…' : 'Guardar'}
-              </button>
+              <button type="button" className="btn-sm btn-cancel" onClick={closeModal}>{esConsulta ? 'Cerrar' : 'Cancelar'}</button>
+              {!esConsulta && (
+                <button type="submit" className="btn-primary btn-inline" disabled={saving}>
+                  {saving ? 'Guardando…' : 'Guardar'}
+                </button>
+              )}
             </div>
           </form>
         </Modal>

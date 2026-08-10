@@ -1,12 +1,16 @@
 import { useState, useEffect } from 'react';
-import { Outlet, useNavigate, useLocation } from 'react-router-dom';
+import { Outlet, useNavigate, useLocation, Navigate } from 'react-router-dom';
 import Sidebar from '../components/Sidebar';
 import ConfirmDialogHost from '../components/ConfirmDialog';
+import { getRole, clearSession } from '../utils/auth';
+
+const RUTA_PERMITIDA_CONSULTA = '/afiliados';
 
 function DashboardLayout() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
+  const rol = getRole();
 
   useEffect(() => {
     const main = document.querySelector('.layout-main');
@@ -14,9 +18,15 @@ function DashboardLayout() {
   }, [location.pathname]);
 
   const logout = () => {
-    localStorage.removeItem('apmu_token');
+    clearSession();
     navigate('/login', { replace: true });
   };
+
+  // El rol Consulta solo puede navegar dentro de Afiliados; cualquier otra
+  // ruta del panel (incluso tecleada a mano) redirige ahí.
+  if (rol === 'Consulta' && !location.pathname.startsWith(RUTA_PERMITIDA_CONSULTA)) {
+    return <Navigate to={RUTA_PERMITIDA_CONSULTA} replace />;
+  }
 
   return (
     <div className="layout">

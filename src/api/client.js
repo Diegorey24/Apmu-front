@@ -10,4 +10,18 @@ client.interceptors.request.use((config) => {
   return config;
 });
 
+client.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    if (error.response?.status === 401) {
+      localStorage.removeItem('apmu_token');
+      localStorage.removeItem('apmu_role');
+      if (!window.location.hash.startsWith('#/login')) {
+        window.location.hash = '#/login';
+      }
+    }
+    return Promise.reject(error);
+  }
+);
+
 export default client;

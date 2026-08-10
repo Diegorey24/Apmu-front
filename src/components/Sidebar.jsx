@@ -1,6 +1,7 @@
 import { NavLink, useNavigate, useLocation } from 'react-router-dom';
 import { useState } from 'react';
 import apmuLogo from '../assets/apmu-5.jpg';
+import { getRole, clearSession } from '../utils/auth';
 
 const grupos = [
   {
@@ -75,6 +76,7 @@ const grupos = [
 function Sidebar({ isOpen, onClose }) {
   const navigate = useNavigate();
   const location = useLocation();
+  const esConsulta = getRole() === 'Consulta';
 
   const grupoActivo = grupos.find(g =>
     g.links.some(l => location.pathname.startsWith(l.to))
@@ -83,7 +85,7 @@ function Sidebar({ isOpen, onClose }) {
   const [abiertos, setAbiertos] = useState(grupoActivo ? [grupoActivo] : []);
 
   const logout = () => {
-    localStorage.removeItem('apmu_token');
+    clearSession();
     navigate('/login', { replace: true });
   };
 
@@ -96,6 +98,22 @@ function Sidebar({ isOpen, onClose }) {
       prev.includes(id) ? prev.filter(g => g !== id) : [...prev, id]
     );
   };
+
+  if (esConsulta) {
+    return (
+      <aside className={`sidebar${isOpen ? ' sidebar--open' : ''}`}>
+        <div className="sidebar-logo">
+          <img src={apmuLogo} alt="APMU" />
+        </div>
+        <nav className="sidebar-nav">
+          <NavLink to="/afiliados" onClick={handleNav}>
+            Afiliados
+          </NavLink>
+        </nav>
+        <button className="sidebar-logout" onClick={logout}>Cerrar sesión</button>
+      </aside>
+    );
+  }
 
   return (
     <aside className={`sidebar${isOpen ? ' sidebar--open' : ''}`}>
