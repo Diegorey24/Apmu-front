@@ -22,6 +22,19 @@ export default function Creditos() {
   const LIMIT = 20;
   const totalPages = Math.ceil(total / LIMIT);
 
+  // Exportar/imprimir (todos los registros, no solo la página actual)
+  const [printData, setPrintData] = useState(null);
+  const [exporting, setExporting] = useState(false);
+  const [printing, setPrinting] = useState(false);
+
+  const filtrosActuales = () => ({
+    estado: filtroEstado || undefined,
+    clienteId: filtroCliente || undefined,
+    busqueda: filtroBusqueda || undefined,
+  });
+
+  const cargarTodos = () => getCreditos({ ...filtrosActuales(), page: 1, limit: 99999 });
+
   const cargar = async (p = 1, filtros = {}) => {
     setLoading(true);
     try {
@@ -34,6 +47,18 @@ export default function Creditos() {
   };
 
   useEffect(() => { cargar(1); }, []);
+
+  useEffect(() => {
+    if (!printData) return;
+    const timer = setTimeout(() => window.print(), 100);
+    return () => clearTimeout(timer);
+  }, [printData]);
+
+  useEffect(() => {
+    const onAfterPrint = () => setPrintData(null);
+    window.addEventListener('afterprint', onAfterPrint);
+    return () => window.removeEventListener('afterprint', onAfterPrint);
+  }, []);
 
   const aplicarFiltros = () => {
     setPage(1);
@@ -77,26 +102,44 @@ export default function Creditos() {
 
   const formatMonto = (m) => m != null ? `$ ${Number(m).toLocaleString('es-UY', { minimumFractionDigits: 2 })}` : '—';
 
-  const exportarExcel = () => {
-    const filas = creditos.map(c => ({
-      'Nº crédito': c.Numero,
-      Socio: c.NombreSocio || c.Cliente_Id,
-      Tipo: c.TipoSolicitud,
-      Finalidad: c.Finalidad,
-      Capital: c.CapitalInicial ?? '',
-      'Cuotas pagas': c.CuotasPagas,
-      'Cuotas totales': c.CantidadCuotas,
-      Saldo: c.SaldoCapital ?? '',
-      Estado: c.Estado,
-      'Fecha otorgado': c.FechaOtorgado ? c.FechaOtorgado.substring(0, 10) : '',
-    }));
-    const hoja = XLSX.utils.json_to_sheet(filas);
-    const libro = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(libro, hoja, 'Créditos Históricos');
-    XLSX.writeFile(libro, 'creditos_historicos_cpmu.xlsx');
+  const exportarExcel = async () => {
+    setExporting(true);
+    try {
+      const res = await cargarTodos();
+      const filas = (res.data.data || []).map(c => ({
+        'Nº crédito': c.Numero,
+        Socio: c.NombreSocio || c.Cliente_Id,
+        Tipo: c.TipoSolicitud,
+        Finalidad: c.Finalidad,
+        Capital: c.CapitalInicial ?? '',
+        'Cuotas pagas': c.CuotasPagas,
+        'Cuotas totales': c.CantidadCuotas,
+        Saldo: c.SaldoCapital ?? '',
+        Estado: c.Estado,
+        'Fecha otorgado': c.FechaOtorgado ? c.FechaOtorgado.substring(0, 10) : '',
+      }));
+      const hoja = XLSX.utils.json_to_sheet(filas);
+      const libro = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(libro, hoja, 'Créditos Históricos');
+      XLSX.writeFile(libro, 'creditos_historicos_cpmu.xlsx');
+    } catch {
+      alert('Error al exportar.');
+    } finally {
+      setExporting(false);
+    }
   };
 
-  const imprimir = () => window.print();
+  const imprimir = async () => {
+    setPrinting(true);
+    try {
+      const res = await cargarTodos();
+      setPrintData(res.data.data || []);
+    } catch {
+      alert('Error al preparar la impresión.');
+    } finally {
+      setPrinting(false);
+    }
+  };
 
   return (
     <div className="page">
@@ -127,14 +170,17 @@ export default function Creditos() {
         </div>
         <button className="btn-primary btn-inline" onClick={aplicarFiltros}>Buscar</button>
         <button className="btn-sm" style={{ padding: '9px 18px', fontSize: 14 }} onClick={limpiarFiltros}>Limpiar</button>
-        <button className="btn-sm no-print" onClick={exportarExcel}>Exportar Excel</button>
-        <button className="btn-sm no-print" onClick={imprimir}>Imprimir</button>
+        <button className="btn-sm no-print" onClick={exportarExcel} disabled={exporting}>
+          {exporting ? 'Exportando…' : 'Exportar Excel'}
+        </button>
+        <button className="btn-sm no-print" onClick={imprimir} disabled={printing}>
+          {printing ? 'Preparando…' : 'Imprimir'}
+        </button>
       </div>
 
       {loading ? <p>Cargando...</p> : (
         <>
-          <div className="print-area">
-          <h2 className="print-title">CRÉDITOS HISTÓRICOS CPMU</h2>
+          <div>
           <table className="tabla">
             <thead>
               <tr>
@@ -181,6 +227,44 @@ export default function Creditos() {
             </div>
           )}
         </>
+      )}
+
+      {printData && (
+        <div className="print-area">
+          <h2 className="print-title">CRÉDITOS HISTÓRICOS CPMU</h2>
+          <table className="tabla">
+            <thead>
+              <tr>
+                <th>Nº crédito</th>
+                <th>Socio</th>
+                <th>Tipo</th>
+                <th>Finalidad</th>
+                <th>Capital</th>
+                <th>Cuotas</th>
+                <th>Saldo</th>
+                <th>Estado</th>
+                <th>Fecha otorgado</th>
+              </tr>
+            </thead>
+            <tbody>
+              {printData.length === 0 ? (
+                <tr><td colSpan={9}>No hay créditos</td></tr>
+              ) : printData.map(c => (
+                <tr key={c.Id}>
+                  <td>{c.Numero}</td>
+                  <td>{c.NombreSocio || c.Cliente_Id}</td>
+                  <td>{c.TipoSolicitud}</td>
+                  <td>{c.Finalidad}</td>
+                  <td style={{ whiteSpace: 'nowrap' }}>{formatMonto(c.CapitalInicial)}</td>
+                  <td><strong>{c.CuotasPagas}</strong>/{c.CantidadCuotas}</td>
+                  <td style={{ whiteSpace: 'nowrap' }}>{formatMonto(c.SaldoCapital)}</td>
+                  <td>{c.Estado}</td>
+                  <td>{formatFecha(c.FechaOtorgado)}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
       )}
 
       {/* Modal detalle */}

@@ -29,6 +29,10 @@ export default function Libros() {
   const LIMIT = 20;
   const totalPages = Math.ceil(total / LIMIT);
 
+  // Impresión (todos los registros, no solo la página actual)
+  const [printData, setPrintData] = useState(null);
+  const [printing, setPrinting] = useState(false);
+
   const cargar = async (filtros = {}, p = 1) => {
     try {
       const res = await getLibros({ ...filtros, page: p, limit: LIMIT });
@@ -44,6 +48,36 @@ export default function Libros() {
     getEditoriales().then(r => setEditoriales(r.data.data));
     getMaterias().then(r => setMaterias(r.data.data));
   }, []);
+
+  useEffect(() => {
+    if (!printData) return;
+    const timer = setTimeout(() => window.print(), 100);
+    return () => clearTimeout(timer);
+  }, [printData]);
+
+  useEffect(() => {
+    const onAfterPrint = () => setPrintData(null);
+    window.addEventListener('afterprint', onAfterPrint);
+    return () => window.removeEventListener('afterprint', onAfterPrint);
+  }, []);
+
+  const handleImprimir = async () => {
+    setPrinting(true);
+    try {
+      const res = await getLibros({
+        tipo: filtroTipo || undefined,
+        idMateria: filtroMateria || undefined,
+        busqueda: filtroBusqueda || undefined,
+        page: 1,
+        limit: 99999,
+      });
+      setPrintData(res.data.data || []);
+    } catch {
+      alert('Error al preparar la impresión.');
+    } finally {
+      setPrinting(false);
+    }
+  };
 
   const aplicarFiltros = () => {
     setPage(1);
@@ -163,14 +197,15 @@ export default function Libros() {
         )}
         <button className="btn-primary btn-inline" onClick={aplicarFiltros}>Buscar</button>
         <button className="btn-sm" onClick={limpiarFiltros}>Limpiar</button>
-        <button className="btn-sm no-print" onClick={() => window.print()}>Imprimir</button>
+        <button className="btn-sm no-print" onClick={handleImprimir} disabled={printing}>
+          {printing ? 'Preparando…' : 'Imprimir'}
+        </button>
       </div>
 
       {loading ? (
         <p>Cargando...</p>
       ) : (
-        <div className="print-area">
-        <h2 className="print-title">LISTADO DE LIBROS</h2>
+        <div>
         <table className="tabla">
           <thead>
             <tr>
@@ -219,6 +254,48 @@ export default function Libros() {
         </table>
         </div>
 
+      )}
+
+      {printData && (
+        <div className="print-area">
+          <h2 className="print-title">LISTADO DE LIBROS</h2>
+          <table className="tabla">
+            <thead>
+              <tr>
+                <th>Nombre</th>
+                <th>Autor</th>
+                <th>ISBN</th>
+                <th>Tipo</th>
+                <th>Editorial</th>
+                <th>Materia</th>
+                <th>Grado</th>
+                <th>Stock</th>
+                <th>Costo</th>
+                <th>Estado</th>
+              </tr>
+            </thead>
+            <tbody>
+              {printData.length === 0 ? (
+                <tr><td colSpan={10}>No hay libros</td></tr>
+              ) : (
+                printData.map(l => (
+                  <tr key={l.Id} style={{ opacity: l.FechaBaja ? 0.5 : 1 }}>
+                    <td>{l.Nombre}</td>
+                    <td>{l.Autor || '-'}</td>
+                    <td>{l.ISBN || '-'}</td>
+                    <td>{l.Tipo}</td>
+                    <td>{l.NombreEditorial || '-'}</td>
+                    <td>{l.NombreMateria || '-'}</td>
+                    <td>{l.Grado || '-'}</td>
+                    <td>{l.Stock}</td>
+                    <td>{l.Tipo === 'Estudio' && l.Costo ? `$ ${Number(l.Costo).toFixed(2)}` : '—'}</td>
+                    <td>{l.FechaBaja ? 'Baja' : 'Activo'}</td>
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </table>
+        </div>
       )}
 
       {totalPages > 1 && (

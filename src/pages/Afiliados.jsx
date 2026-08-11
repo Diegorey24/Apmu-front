@@ -26,6 +26,7 @@ const EMPTY = {
   CodigoPostal: '', Departamento: '', Observacion: '',
   NroFuncionario: '', Cargo: '', Sector: '', Turno: '',
   FechaIngreso: '', IdCategoria: '', IdUbicacion: '',
+  Banco: '', NroCuenta: '', EmpresaEnvio: '',
 };
 const toDateInput = (val) => (val ? val.substring(0, 10) : '');
 
@@ -90,6 +91,10 @@ function Afiliados() {
   const [savingCorte, setSavingCorte] = useState(false);
   const [errorCorte, setErrorCorte] = useState('');
 
+  // Impresión (todos los registros, no solo la página actual)
+  const [printData, setPrintData] = useState(null);
+  const [printing, setPrinting] = useState(false);
+
   const load = async (p, s, inactivos = verInactivos) => {
     setLoading(true);
     setPageError('');
@@ -110,6 +115,30 @@ function Afiliados() {
     getUbicaciones().then(r => setUbicaciones(r.data.data || []));
     getMotivosBaja().then(r => setMotivosBaja(r.data.data || []));
   }, []);
+
+  useEffect(() => {
+    if (!printData) return;
+    const timer = setTimeout(() => window.print(), 100);
+    return () => clearTimeout(timer);
+  }, [printData]);
+
+  useEffect(() => {
+    const onAfterPrint = () => setPrintData(null);
+    window.addEventListener('afterprint', onAfterPrint);
+    return () => window.removeEventListener('afterprint', onAfterPrint);
+  }, []);
+
+  const handleImprimir = async () => {
+    setPrinting(true);
+    try {
+      const res = await getAfiliados(1, 99999, search, verInactivos ? 0 : 1);
+      setPrintData(res.data.data || []);
+    } catch {
+      alert('Error al preparar la impresión.');
+    } finally {
+      setPrinting(false);
+    }
+  };
 
   const handleSearchChange = (val) => {
     setSearch(val);
@@ -159,6 +188,9 @@ function Afiliados() {
       FechaIngreso: toDateInput(record.FechaIngreso),
       IdCategoria: record.IdCategoria || '',
       IdUbicacion: record.IdUbicacion || '',
+      Banco: record.Banco || '',
+      NroCuenta: record.NroCuenta || '',
+      EmpresaEnvio: record.EmpresaEnvio || '',
 
     });
     setFormError('');
@@ -478,13 +510,14 @@ function Afiliados() {
         >
           {verInactivos ? 'Ver activos' : 'Ver dados de baja'}
         </button>
-        <button className="btn-sm no-print" onClick={() => window.print()}>Imprimir</button>
+        <button className="btn-sm no-print" onClick={handleImprimir} disabled={printing}>
+          {printing ? 'Preparando…' : 'Imprimir'}
+        </button>
       </div>
 
       {pageError && <p className="alert alert-error">{pageError}</p>}
 
-      <div className="table-wrapper print-area">
-        <h2 className="print-title">Afiliados APMU {new Date().getFullYear()}</h2>
+      <div className="table-wrapper">
         <table>
           <thead>
             <tr>
@@ -551,6 +584,40 @@ function Afiliados() {
         </div>
       )}
 
+      {printData && (
+        <div className="table-wrapper print-area">
+          <h2 className="print-title">Afiliados APMU {new Date().getFullYear()}</h2>
+          <table>
+            <thead>
+              <tr>
+                <th>#</th>
+                <th>Documento</th>
+                <th>Nº Func.</th>
+                <th>Apellido y Nombre</th>
+                <th>Celular</th>
+                <th>Mail</th>
+                <th>Categoría</th>
+                <th>Ubicación</th>
+              </tr>
+            </thead>
+            <tbody>
+              {printData.map((a) => (
+                <tr key={a.Id}>
+                  <td className="td-muted">{a.Id}</td>
+                  <td>{a.Documento}</td>
+                  <td>{a.NroFuncionario || '—'}</td>
+                  <td>{nombreCompleto(a)}</td>
+                  <td>{a.Celular?.trim() || '—'}</td>
+                  <td>{a.Mail || '—'}</td>
+                  <td>{a.NombreCategoria || '—'}</td>
+                  <td>{a.NombreUbicacion || '—'}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+
       {modal && (
         <Modal
           title={esConsulta ? 'Ficha de afiliado (solo lectura)' : modal.mode === 'create' ? 'Nuevo afiliado' : 'Editar afiliado'}
@@ -559,303 +626,314 @@ function Afiliados() {
         >
           <form onSubmit={handleSave}>
             <fieldset disabled={esConsulta} style={{ border: 0, padding: 0, margin: 0 }}>
-            <div className="form-grid">
+              <div className="form-grid">
 
-              <p className="section-title">Datos personales</p>
+                <p className="section-title">Datos personales</p>
 
-              <div className="form-group">
-                <label htmlFor="Documento">Documento *</label>
-                <input id="Documento" name="Documento" value={form.Documento} onChange={handleChange} required />
-              </div>
-              <div className="form-group">
-                <label htmlFor="Sexo">Sexo</label>
-                <select id="Sexo" name="Sexo" value={form.Sexo} onChange={handleChange}>
-                  <option value="">—</option>
-                  <option value="M">Masculino</option>
-                  <option value="F">Femenino</option>
-                  <option value="NB">No binario</option>
-                  <option value="O">Otros</option>
-                </select>
-              </div>
-
-              <div className="form-group">
-                <label htmlFor="PrimerNombre">Primer nombre *</label>
-                <input id="PrimerNombre" name="PrimerNombre" value={form.PrimerNombre} onChange={handleChange} required />
-              </div>
-              <div className="form-group">
-                <label htmlFor="SegundoNombre">Segundo nombre</label>
-                <input id="SegundoNombre" name="SegundoNombre" value={form.SegundoNombre} onChange={handleChange} />
-              </div>
-
-              <div className="form-group">
-                <label htmlFor="PrimerApellido">Primer apellido *</label>
-                <input id="PrimerApellido" name="PrimerApellido" value={form.PrimerApellido} onChange={handleChange} required />
-              </div>
-              <div className="form-group">
-                <label htmlFor="SegundoApellido">Segundo apellido</label>
-                <input id="SegundoApellido" name="SegundoApellido" value={form.SegundoApellido} onChange={handleChange} />
-              </div>
-
-              <div className="form-group">
-                <label htmlFor="FechaNacimiento">Fecha de nacimiento *</label>
-                <input type="date" id="FechaNacimiento" name="FechaNacimiento" value={form.FechaNacimiento} onChange={handleChange} required />
-              </div>
-              <div className="form-group">
-                <label htmlFor="EstadoCivil">Estado civil</label>
-                <select id="EstadoCivil" name="EstadoCivil" value={form.EstadoCivil} onChange={handleChange}>
-                  <option value="">—</option>
-                  <option value="Casado">Casado/a</option>
-                  <option value="Divorciado">Divorciado/a</option>
-                  <option value="Separado">Separado/a</option>
-                  <option value="Soltero">Soltero/a</option>
-                  <option value="Union de hecho">Unión de hecho</option>
-                  <option value="Viudo">Viudo/a</option>
-                </select>
-              </div>
-
-              {modal.mode === 'edit' && (
                 <div className="form-group">
-                  <label htmlFor="FechaFallecimiento">Fecha de fallecimiento</label>
-                  <input type="date" id="FechaFallecimiento" name="FechaFallecimiento" value={form.FechaFallecimiento} onChange={handleChange} />
+                  <label htmlFor="Documento">Documento *</label>
+                  <input id="Documento" name="Documento" value={form.Documento} onChange={handleChange} required />
                 </div>
-              )}
+                <div className="form-group">
+                  <label htmlFor="Sexo">Sexo</label>
+                  <select id="Sexo" name="Sexo" value={form.Sexo} onChange={handleChange}>
+                    <option value="">—</option>
+                    <option value="M">Masculino</option>
+                    <option value="F">Femenino</option>
+                    <option value="NB">No binario</option>
+                    <option value="O">Otros</option>
+                  </select>
+                </div>
 
-              <p className="section-title">Datos laborales</p>
+                <div className="form-group">
+                  <label htmlFor="PrimerNombre">Primer nombre *</label>
+                  <input id="PrimerNombre" name="PrimerNombre" value={form.PrimerNombre} onChange={handleChange} required />
+                </div>
+                <div className="form-group">
+                  <label htmlFor="SegundoNombre">Segundo nombre</label>
+                  <input id="SegundoNombre" name="SegundoNombre" value={form.SegundoNombre} onChange={handleChange} />
+                </div>
 
-              <div className="form-group">
-                <label htmlFor="NroFuncionario">Nº de funcionario</label>
-                <input id="NroFuncionario" name="NroFuncionario" value={form.NroFuncionario} onChange={handleChange} />
-              </div>
-              <div className="form-group">
-                <label htmlFor="FechaIngreso">Fecha de ingreso</label>
-                <input type="date" id="FechaIngreso" name="FechaIngreso" value={form.FechaIngreso} onChange={handleChange} />
-              </div>
-              <div className="form-group">
-                <label htmlFor="Cargo">Cargo</label>
-                <input id="Cargo" name="Cargo" value={form.Cargo} onChange={handleChange} />
-              </div>
-              <div className="form-group">
-                <label htmlFor="Sector">Sector</label>
-                <input id="Sector" name="Sector" value={form.Sector} onChange={handleChange} />
-              </div>
-              <div className="form-group">
-                <label htmlFor="Turno">Turno</label>
-                <input id="Turno" name="Turno" value={form.Turno} onChange={handleChange} />
-              </div>
-              <div className="form-group">
-                <label htmlFor="IdCategoria">Categoría</label>
-                <select id="IdCategoria" name="IdCategoria" value={form.IdCategoria} onChange={handleChange}>
-                  <option value="">— Seleccioná —</option>
-                  {categorias.map(c => <option key={c.Id} value={c.Id}>{c.Nombre}</option>)}
-                </select>
-              </div>
-              <div className="form-group">
-                <label htmlFor="IdUbicacion">Ubicación</label>
-                <select id="IdUbicacion" name="IdUbicacion" value={form.IdUbicacion} onChange={handleChange}>
-                  <option value="">— Seleccioná —</option>
-                  <optgroup label="Central">
-                    {ubicaciones.filter(u => u.Tipo === 'Central').map(u => <option key={u.Id} value={u.Id}>{u.Nombre}</option>)}
-                  </optgroup>
-                  <optgroup label="Sucursales">
-                    {ubicaciones.filter(u => u.Tipo === 'Sucursal').map(u => <option key={u.Id} value={u.Id}>{u.Nombre}</option>)}
-                  </optgroup>
-                  <optgroup label="Filiales">
-                    {ubicaciones.filter(u => u.Tipo === 'Filial').map(u => <option key={u.Id} value={u.Id}>{u.Nombre}</option>)}
-                  </optgroup>
-                </select>
-              </div>
+                <div className="form-group">
+                  <label htmlFor="PrimerApellido">Primer apellido *</label>
+                  <input id="PrimerApellido" name="PrimerApellido" value={form.PrimerApellido} onChange={handleChange} required />
+                </div>
+                <div className="form-group">
+                  <label htmlFor="SegundoApellido">Segundo apellido</label>
+                  <input id="SegundoApellido" name="SegundoApellido" value={form.SegundoApellido} onChange={handleChange} />
+                </div>
 
-              {ubicacionSeleccionada?.Tipo === 'Filial' && (
+                <div className="form-group">
+                  <label htmlFor="FechaNacimiento">Fecha de nacimiento *</label>
+                  <input type="date" id="FechaNacimiento" name="FechaNacimiento" value={form.FechaNacimiento} onChange={handleChange} required />
+                </div>
+                <div className="form-group">
+                  <label htmlFor="EstadoCivil">Estado civil</label>
+                  <select id="EstadoCivil" name="EstadoCivil" value={form.EstadoCivil} onChange={handleChange}>
+                    <option value="">—</option>
+                    <option value="Casado">Casado/a</option>
+                    <option value="Divorciado">Divorciado/a</option>
+                    <option value="Separado">Separado/a</option>
+                    <option value="Soltero">Soltero/a</option>
+                    <option value="Union de hecho">Unión de hecho</option>
+                    <option value="Viudo">Viudo/a</option>
+                  </select>
+                </div>
+
+                {modal.mode === 'edit' && (
+                  <div className="form-group">
+                    <label htmlFor="FechaFallecimiento">Fecha de fallecimiento</label>
+                    <input type="date" id="FechaFallecimiento" name="FechaFallecimiento" value={form.FechaFallecimiento} onChange={handleChange} />
+                  </div>
+                )}
+
+                <p className="section-title">Datos laborales</p>
+
+                <div className="form-group">
+                  <label htmlFor="NroFuncionario">Nº de funcionario</label>
+                  <input id="NroFuncionario" name="NroFuncionario" value={form.NroFuncionario} onChange={handleChange} />
+                </div>
+                <div className="form-group">
+                  <label htmlFor="FechaIngreso">Fecha de ingreso</label>
+                  <input type="date" id="FechaIngreso" name="FechaIngreso" value={form.FechaIngreso} onChange={handleChange} />
+                </div>
+                <div className="form-group">
+                  <label htmlFor="Cargo">Cargo</label>
+                  <input id="Cargo" name="Cargo" value={form.Cargo} onChange={handleChange} />
+                </div>
+                <div className="form-group">
+                  <label htmlFor="Sector">Sector</label>
+                  <input id="Sector" name="Sector" value={form.Sector} onChange={handleChange} />
+                </div>
+                <div className="form-group">
+                  <label htmlFor="Turno">Turno</label>
+                  <input id="Turno" name="Turno" value={form.Turno} onChange={handleChange} />
+                </div>
+                <div className="form-group">
+                  <label htmlFor="IdCategoria">Categoría</label>
+                  <select id="IdCategoria" name="IdCategoria" value={form.IdCategoria} onChange={handleChange}>
+                    <option value="">— Seleccioná —</option>
+                    {categorias.map(c => <option key={c.Id} value={c.Id}>{c.Nombre}</option>)}
+                  </select>
+                </div>
+                <div className="form-group">
+                  <label htmlFor="IdUbicacion">Ubicación</label>
+                  <select id="IdUbicacion" name="IdUbicacion" value={form.IdUbicacion} onChange={handleChange}>
+                    <option value="">— Seleccioná —</option>
+                    <optgroup label="Central">
+                      {ubicaciones.filter(u => u.Tipo === 'Central').map(u => <option key={u.Id} value={u.Id}>{u.Nombre}</option>)}
+                    </optgroup>
+                    <optgroup label="Sucursales">
+                      {ubicaciones.filter(u => u.Tipo === 'Sucursal').map(u => <option key={u.Id} value={u.Id}>{u.Nombre}</option>)}
+                    </optgroup>
+                    <optgroup label="Filiales">
+                      {ubicaciones.filter(u => u.Tipo === 'Filial').map(u => <option key={u.Id} value={u.Id}>{u.Nombre}</option>)}
+                    </optgroup>
+                  </select>
+                </div>
+
+                {ubicacionSeleccionada?.Tipo === 'Filial' && (
+                  <div className="form-group full">
+                    <div style={{ background: 'var(--bg)', border: '1px solid var(--border)', borderRadius: 8, padding: 12, fontSize: 13 }}>
+                      <p style={{ margin: '0 0 6px', fontWeight: 600, color: 'var(--text-h)' }}>Datos de la filial</p>
+                      <p style={{ margin: '2px 0' }}>Dirección: {ubicacionSeleccionada.Direccion || '—'}</p>
+                      <p style={{ margin: '2px 0' }}>Correo: {ubicacionSeleccionada.Correo || '—'}</p>
+                      <p style={{ margin: '2px 0' }}>Teléfono: {ubicacionSeleccionada.Telefono || '—'}</p>
+                      <p style={{ margin: '2px 0' }}>Empresa de envío: {ubicacionSeleccionada.EmpresaEnvio || '—'}</p>
+                    </div>
+                  </div>
+                )}
+                <p className="section-title">Datos bancarios</p>
+
+                <div className="form-group">
+                  <label htmlFor="Banco">Banco</label>
+                  <input id="Banco" name="Banco" value={form.Banco} onChange={handleChange} />
+                </div>
+                <div className="form-group">
+                  <label htmlFor="NroCuenta">Nº de cuenta</label>
+                  <input id="NroCuenta" name="NroCuenta" value={form.NroCuenta} onChange={handleChange} />
+                </div>
+                <div className="form-group">
+                  <label htmlFor="EmpresaEnvio">Empresa de envío</label>
+                  <input id="EmpresaEnvio" name="EmpresaEnvio" value={form.EmpresaEnvio} onChange={handleChange} />
+                </div>
+
+                <p className="section-title">Contacto</p>
+
+                <div className="form-group">
+                  <label htmlFor="Mail">Mail</label>
+                  <input type="email" id="Mail" name="Mail" value={form.Mail} onChange={handleChange} />
+                </div>
+                <div className="form-group">
+                  <label htmlFor="Celular">Celular</label>
+                  <input id="Celular" name="Celular" value={form.Celular} onChange={handleChange} />
+                </div>
+                <div className="form-group">
+                  <label htmlFor="Telefono">Teléfono</label>
+                  <input id="Telefono" name="Telefono" value={form.Telefono} onChange={handleChange} />
+                </div>
+                <div className="form-group">
+                  <label htmlFor="TelefonoTrabajo">Teléfono trabajo</label>
+                  <input id="TelefonoTrabajo" name="TelefonoTrabajo" value={form.TelefonoTrabajo} onChange={handleChange} />
+                </div>
+
+                <p className="section-title">Domicilio</p>
+
                 <div className="form-group full">
-                  <div style={{ background: 'var(--bg)', border: '1px solid var(--border)', borderRadius: 8, padding: 12, fontSize: 13 }}>
-                    <p style={{ margin: '0 0 6px', fontWeight: 600, color: 'var(--text-h)' }}>Datos de la filial</p>
-                    <p style={{ margin: '2px 0' }}>Dirección: {ubicacionSeleccionada.Direccion || '—'}</p>
-                    <p style={{ margin: '2px 0' }}>Correo: {ubicacionSeleccionada.Correo || '—'}</p>
-                    <p style={{ margin: '2px 0' }}>Teléfono: {ubicacionSeleccionada.Telefono || '—'}</p>
-                    <p style={{ margin: '2px 0' }}>Empresa de envío: {ubicacionSeleccionada.EmpresaEnvio || '—'}</p>
-                    <p style={{ margin: '2px 0' }}>Banco: {ubicacionSeleccionada.Banco || '—'}</p>
-                    <p style={{ margin: '2px 0' }}>Tipo de cuenta: {ubicacionSeleccionada.TipoCuenta || '—'}</p>
-                    <p style={{ margin: '2px 0' }}>Nº de cuenta: {ubicacionSeleccionada.NroCuenta || '—'}</p>
+                  <label htmlFor="Domicilio">Domicilio</label>
+                  <input id="Domicilio" name="Domicilio" value={form.Domicilio} onChange={handleChange} />
+                </div>
+                <div className="form-group">
+                  <label htmlFor="Ciudad">Ciudad</label>
+                  <input id="Ciudad" name="Ciudad" value={form.Ciudad} onChange={handleChange} />
+                </div>
+                <div className="form-group">
+                  <label htmlFor="Localidad">Localidad</label>
+                  <input id="Localidad" name="Localidad" value={form.Localidad} onChange={handleChange} />
+                </div>
+                <div className="form-group">
+                  <label htmlFor="CodigoPostal">Código postal</label>
+                  <input id="CodigoPostal" name="CodigoPostal" value={form.CodigoPostal} onChange={handleChange} />
+                </div>
+                <div className="form-group">
+                  <label htmlFor="Departamento">Departamento</label>
+                  <select id="Departamento" name="Departamento" value={form.Departamento} onChange={handleChange}>
+                    <option value="">—</option>
+                    <option>Artigas</option>
+                    <option>Canelones</option>
+                    <option>Cerro Largo</option>
+                    <option>Colonia</option>
+                    <option>Durazno</option>
+                    <option>Flores</option>
+                    <option>Florida</option>
+                    <option>Lavalleja</option>
+                    <option>Maldonado</option>
+                    <option>Montevideo</option>
+                    <option>Paysandú</option>
+                    <option>Río Negro</option>
+                    <option>Rivera</option>
+                    <option>Rocha</option>
+                    <option>Salto</option>
+                    <option>San José</option>
+                    <option>Soriano</option>
+                    <option>Tacuarembó</option>
+                    <option>Treinta y Tres</option>
+                  </select>
+                </div>
+
+                <p className="section-title">Otros</p>
+
+                <div className="form-group full">
+                  <label htmlFor="Observacion">Observación</label>
+                  <textarea id="Observacion" name="Observacion" value={form.Observacion} onChange={handleChange} rows={3} />
+                </div>
+                <p className="section-title">Aportes</p>
+
+                <div className="form-group full">
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+                    <span style={{ fontSize: '13px', color: 'var(--color-text-secondary)' }}>
+                      Últimos 10 movimientos
+                    </span>
+                    <div style={{ display: 'flex', gap: '8px' }}>
+                      <button type="button" className="btn-sm" onClick={() => {
+                        setFormCargo({ Rubro: '', Importe: '', Mes: '', Anio: '', FechaVto: '' });
+                        setErrorCargo('');
+                        setModalCargo(true);
+                      }}>+ Nuevo cargo</button>
+                      <button type="button" className="btn-sm" onClick={() => {
+                        closeModal();
+                        navigate(`/cuenta-corriente?idAfiliado=${modal.record.Id}`)
+                      }}>Ver todos</button>
+                    </div>
                   </div>
-                </div>
-              )}
 
-              <p className="section-title">Contacto</p>
-
-              <div className="form-group">
-                <label htmlFor="Mail">Mail</label>
-                <input type="email" id="Mail" name="Mail" value={form.Mail} onChange={handleChange} />
-              </div>
-              <div className="form-group">
-                <label htmlFor="Celular">Celular</label>
-                <input id="Celular" name="Celular" value={form.Celular} onChange={handleChange} />
-              </div>
-              <div className="form-group">
-                <label htmlFor="Telefono">Teléfono</label>
-                <input id="Telefono" name="Telefono" value={form.Telefono} onChange={handleChange} />
-              </div>
-              <div className="form-group">
-                <label htmlFor="TelefonoTrabajo">Teléfono trabajo</label>
-                <input id="TelefonoTrabajo" name="TelefonoTrabajo" value={form.TelefonoTrabajo} onChange={handleChange} />
-              </div>
-
-              <p className="section-title">Domicilio</p>
-
-              <div className="form-group full">
-                <label htmlFor="Domicilio">Domicilio</label>
-                <input id="Domicilio" name="Domicilio" value={form.Domicilio} onChange={handleChange} />
-              </div>
-              <div className="form-group">
-                <label htmlFor="Ciudad">Ciudad</label>
-                <input id="Ciudad" name="Ciudad" value={form.Ciudad} onChange={handleChange} />
-              </div>
-              <div className="form-group">
-                <label htmlFor="Localidad">Localidad</label>
-                <input id="Localidad" name="Localidad" value={form.Localidad} onChange={handleChange} />
-              </div>
-              <div className="form-group">
-                <label htmlFor="CodigoPostal">Código postal</label>
-                <input id="CodigoPostal" name="CodigoPostal" value={form.CodigoPostal} onChange={handleChange} />
-              </div>
-              <div className="form-group">
-                <label htmlFor="Departamento">Departamento</label>
-                <select id="Departamento" name="Departamento" value={form.Departamento} onChange={handleChange}>
-                  <option value="">—</option>
-                  <option>Artigas</option>
-                  <option>Canelones</option>
-                  <option>Cerro Largo</option>
-                  <option>Colonia</option>
-                  <option>Durazno</option>
-                  <option>Flores</option>
-                  <option>Florida</option>
-                  <option>Lavalleja</option>
-                  <option>Maldonado</option>
-                  <option>Montevideo</option>
-                  <option>Paysandú</option>
-                  <option>Río Negro</option>
-                  <option>Rivera</option>
-                  <option>Rocha</option>
-                  <option>Salto</option>
-                  <option>San José</option>
-                  <option>Soriano</option>
-                  <option>Tacuarembó</option>
-                  <option>Treinta y Tres</option>
-                </select>
-              </div>
-
-              <p className="section-title">Otros</p>
-
-              <div className="form-group full">
-                <label htmlFor="Observacion">Observación</label>
-                <textarea id="Observacion" name="Observacion" value={form.Observacion} onChange={handleChange} rows={3} />
-              </div>
-              <p className="section-title">Aportes</p>
-
-              <div className="form-group full">
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
-                  <span style={{ fontSize: '13px', color: 'var(--color-text-secondary)' }}>
-                    Últimos 10 movimientos
-                  </span>
-                  <div style={{ display: 'flex', gap: '8px' }}>
-                    <button type="button" className="btn-sm" onClick={() => {
-                      setFormCargo({ Rubro: '', Importe: '', Mes: '', Anio: '', FechaVto: '' });
-                      setErrorCargo('');
-                      setModalCargo(true);
-                    }}>+ Nuevo cargo</button>
-                    <button type="button" className="btn-sm" onClick={() => {
-                      closeModal();
-                      navigate(`/cuenta-corriente?idAfiliado=${modal.record.Id}`)
-                    }}>Ver todos</button>
-                  </div>
-                </div>
-
-                {loadingMov ? (
-                  <p style={{ fontSize: '13px', color: 'var(--color-text-secondary)' }}>Cargando…</p>
-                ) : movimientos.length === 0 ? (
-                  <p style={{ fontSize: '13px', color: 'var(--color-text-secondary)' }}>Sin movimientos.</p>
-                ) : (
-                  <table style={{ width: '100%', fontSize: '13px' }}>
-                    <thead>
-                      <tr>
-                        <th>Rubro</th>
-                        <th>Importe</th>
-                        <th>Período</th>
-                        <th>Estado</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {movimientos.map(m => {
-                        const s = String(m.Aniomes);
-                        const mesesNombres = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Set', 'Oct', 'Nov', 'Dic'];
-                        const periodo = m.Aniomes ? `${mesesNombres[parseInt(s.substring(4, 6)) - 1]} ${s.substring(0, 4)}` : '—';
-                        return (
-                          <tr key={m.Id}>
-                            <td>{m.RubDsc?.trim() || m.Rubro}</td>
-                            <td>{m.Importe != null ? `$ ${Number(m.Importe).toFixed(2)}` : '—'}</td>
-                            <td>{periodo}</td>
-                            <td>{m.NroRecibo ? <span className="badge badge-ok">Pagado</span> : <span className="badge badge-pending">Pendiente</span>}</td>
-                          </tr>
-                        );
-                      })}
-                    </tbody>
-                  </table>
-                )}
-              </div>
-              <p className="section-title">Hijos</p>
-              <div className="form-group full">
-                <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 8, marginBottom: 8 }}>
-                  <button type="button" className="btn-sm" onClick={abrirConfigCorte}>Configurar fecha de corte</button>
-                  <button type="button" className="btn-sm" onClick={abrirCrearHijo}>+ Agregar hijo</button>
-                </div>
-                {hijos.length === 0 ? (
-                  <p style={{ fontSize: 13, color: 'var(--text)' }}>Sin hijos registrados.</p>
-                ) : (
-                  <table style={{ width: '100%', fontSize: 13 }}>
-                    <thead>
-                      <tr>
-                        <th>Nombre</th>
-                        <th>Documento</th>
-                        <th>Nacimiento</th>
-                        <th>Edad</th>
-                        <th>Discapacidad</th>
-                        <th>Vínculo</th>
-                        <th>Validado</th>
-                        <th></th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {hijos.map(h => (
-                        <tr key={h.Id}>
-                          <td>{h.PrimerNombre} {h.PrimerApellido}</td>
-                          <td>{h.Documento || '—'}</td>
-                          <td>{h.FechaNacimiento ? h.FechaNacimiento.substring(0, 10) : '—'}</td>
-                          <td>{h.EdadAlCorte ?? '—'}</td>
-                          <td title={h.Patologia || ''}>{h.Discapacidad ? 'Sí' : 'No'}</td>
-                          <td>{h.VinculadoA === 'secundario' ? 'Secundario' : 'Titular principal'}</td>
-                          <td>
-                            <span style={{ color: h.Validado ? 'var(--accent)' : 'var(--text)', fontWeight: 500 }}>
-                              {h.Validado ? '✓ Sí' : '✗ No'}
-                            </span>
-                          </td>
-                          <td>
-                            <div className="td-actions">
-                              <button type="button" className="btn-sm" onClick={() => abrirEditarHijo(h)}>Editar</button>
-                              <button type="button" className="btn-sm" onClick={() => toggleValidarHijo(h)}>
-                                {h.Validado ? 'Desvalidar' : 'Validar'}
-                              </button>
-                              <button type="button" className="btn-sm" onClick={() => abrirCambiarTitular(h)}>Cambiar titular</button>
-                              {h.VinculadoA !== 'secundario' && (
-                                <button type="button" className="btn-sm danger" onClick={() => eliminarHijo(h.Id)}>Eliminar</button>
-                              )}
-                            </div>
-                          </td>
+                  {loadingMov ? (
+                    <p style={{ fontSize: '13px', color: 'var(--color-text-secondary)' }}>Cargando…</p>
+                  ) : movimientos.length === 0 ? (
+                    <p style={{ fontSize: '13px', color: 'var(--color-text-secondary)' }}>Sin movimientos.</p>
+                  ) : (
+                    <table style={{ width: '100%', fontSize: '13px' }}>
+                      <thead>
+                        <tr>
+                          <th>Rubro</th>
+                          <th>Importe</th>
+                          <th>Período</th>
+                          <th>Estado</th>
                         </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                )}
+                      </thead>
+                      <tbody>
+                        {movimientos.map(m => {
+                          const s = String(m.Aniomes);
+                          const mesesNombres = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Set', 'Oct', 'Nov', 'Dic'];
+                          const periodo = m.Aniomes ? `${mesesNombres[parseInt(s.substring(4, 6)) - 1]} ${s.substring(0, 4)}` : '—';
+                          return (
+                            <tr key={m.Id}>
+                              <td>{m.RubDsc?.trim() || m.Rubro}</td>
+                              <td>{m.Importe != null ? `$ ${Number(m.Importe).toFixed(2)}` : '—'}</td>
+                              <td>{periodo}</td>
+                              <td>{m.NroRecibo ? <span className="badge badge-ok">Pagado</span> : <span className="badge badge-pending">Pendiente</span>}</td>
+                            </tr>
+                          );
+                        })}
+                      </tbody>
+                    </table>
+                  )}
+                </div>
+                <p className="section-title">Hijos</p>
+                <div className="form-group full">
+                  <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 8, marginBottom: 8 }}>
+                    <button type="button" className="btn-sm" onClick={abrirConfigCorte}>Configurar fecha de corte</button>
+                    <button type="button" className="btn-sm" onClick={abrirCrearHijo}>+ Agregar hijo</button>
+                  </div>
+                  {hijos.length === 0 ? (
+                    <p style={{ fontSize: 13, color: 'var(--text)' }}>Sin hijos registrados.</p>
+                  ) : (
+                    <table style={{ width: '100%', fontSize: 13 }}>
+                      <thead>
+                        <tr>
+                          <th>Nombre</th>
+                          <th>Documento</th>
+                          <th>Nacimiento</th>
+                          <th>Edad</th>
+                          <th>Discapacidad</th>
+                          <th>Vínculo</th>
+                          <th>Validado</th>
+                          <th></th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {hijos.map(h => (
+                          <tr key={h.Id}>
+                            <td>{h.PrimerNombre} {h.PrimerApellido}</td>
+                            <td>{h.Documento || '—'}</td>
+                            <td>{h.FechaNacimiento ? h.FechaNacimiento.substring(0, 10) : '—'}</td>
+                            <td>{h.EdadAlCorte ?? '—'}</td>
+                            <td title={h.Patologia || ''}>{h.Discapacidad ? 'Sí' : 'No'}</td>
+                            <td>{h.VinculadoA === 'secundario' ? 'Secundario' : 'Titular principal'}</td>
+                            <td>
+                              <span style={{ color: h.Validado ? 'var(--accent)' : 'var(--text)', fontWeight: 500 }}>
+                                {h.Validado ? '✓ Sí' : '✗ No'}
+                              </span>
+                            </td>
+                            <td>
+                              <div className="td-actions">
+                                <button type="button" className="btn-sm" onClick={() => abrirEditarHijo(h)}>Editar</button>
+                                <button type="button" className="btn-sm" onClick={() => toggleValidarHijo(h)}>
+                                  {h.Validado ? 'Desvalidar' : 'Validar'}
+                                </button>
+                                <button type="button" className="btn-sm" onClick={() => abrirCambiarTitular(h)}>Cambiar titular</button>
+                                {h.VinculadoA !== 'secundario' && (
+                                  <button type="button" className="btn-sm danger" onClick={() => eliminarHijo(h.Id)}>Eliminar</button>
+                                )}
+                              </div>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  )}
+                </div>
               </div>
-            </div>
             </fieldset>
 
             {formError && <p className="alert alert-error" style={{ marginTop: '16px' }}>{formError}</p>}

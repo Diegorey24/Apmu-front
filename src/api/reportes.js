@@ -17,3 +17,8 @@ export const exportarDeudoresLibros = (fechaDesde, fechaHasta) =>
   client.get('/reportes/exportar/deudores-libros', { params: { fechaDesde, fechaHasta }, responseType: 'blob' });
 export const exportarListadoLibros = (fechaDesde, fechaHasta) =>
   client.get('/reportes/exportar/libros', { params: { fechaDesde, fechaHasta }, responseType: 'blob' });
+export const getAfiliadosPorFilial = (idUbicacion) =>
+  client.get('/reportes/afiliados-filial', { params: { idUbicacion } });
+
+export const exportarAfiliadosFilial = (idUbicacion) =>
+  client.get('/reportes/afiliados-filial/export', { params: { idUbicacion }, responseType: 'blob' });

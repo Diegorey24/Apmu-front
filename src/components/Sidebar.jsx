@@ -109,6 +109,9 @@ function Sidebar({ isOpen, onClose }) {
           <NavLink to="/afiliados" onClick={handleNav}>
             Afiliados
           </NavLink>
+          <NavLink to="/licencias-gremiales" onClick={handleNav}>
+            Licencias gremiales
+          </NavLink>
         </nav>
         <button className="sidebar-logout" onClick={logout}>Cerrar sesión</button>
       </aside>

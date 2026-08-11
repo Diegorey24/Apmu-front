@@ -1,8 +1,9 @@
 import { useState, useRef, useEffect } from 'react';
 import { searchAfiliados } from '../api/afiliados';
 import { getRubros } from '../api/rubros';
-import { getDeudaAfiliado, getConciliacion, exportarAfiliados, exportarBajas, exportarAportes, exportarPrestamos, exportarLicencias, getDeudoresLibros, exportarDeudoresLibros, exportarListadoLibros } from '../api/reportes';
+import { getDeudaAfiliado, getConciliacion, exportarAfiliados, exportarBajas, exportarAportes, exportarPrestamos, exportarLicencias, getDeudoresLibros, exportarDeudoresLibros, exportarListadoLibros, getAfiliadosPorFilial, exportarAfiliadosFilial } from '../api/reportes';
 import { formatFecha } from '../utils/fecha';
+import { getUbicaciones } from '../api/ubicaciones';
 
 const meses = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Set', 'Oct', 'Nov', 'Dic'];
 const mesesCompletos = [
@@ -67,6 +68,13 @@ export default function Reportes() {
   const [fechaLibrosDesde, setFechaLibrosDesde] = useState('');
   const [fechaLibrosHasta, setFechaLibrosHasta] = useState('');
 
+  // Tab filial
+  const [ubicaciones, setUbicaciones] = useState([]);
+  const [filialSeleccionada, setFilialSeleccionada] = useState('');
+  const [afiliadosFilial, setAfiliadosFilial] = useState(null);
+  const [loadingFilial, setLoadingFilial] = useState(false);
+  const [errorFilial, setErrorFilial] = useState('');
+
   const anioActual = new Date().getFullYear();
   const anios = Array.from({ length: 5 }, (_, i) => anioActual - i);
 
@@ -77,6 +85,7 @@ export default function Reportes() {
       const cuota = data.find(r => r.RubDsc?.trim().toLowerCase() === 'cuota social');
       if (cuota) setRubroConc(cuota.RubCod);
     });
+    getUbicaciones().then(r => setUbicaciones(r.data.data || []));
   }, []);
 
   const onBusqueda = (valor) => {
@@ -204,6 +213,29 @@ export default function Reportes() {
     } catch { alert('Error al exportar'); }
   };
 
+  const buscarAfiliadosFilial = async () => {
+    if (!filialSeleccionada) { setErrorFilial('Seleccioná una filial'); return; }
+    setLoadingFilial(true);
+    setErrorFilial('');
+    setAfiliadosFilial(null);
+    try {
+      const res = await getAfiliadosPorFilial(filialSeleccionada);
+      setAfiliadosFilial(res.data.data);
+    } catch {
+      setErrorFilial('Error al cargar el listado');
+    } finally {
+      setLoadingFilial(false);
+    }
+  };
+
+  const handleExportarAfiliadosFilial = async () => {
+    if (!filialSeleccionada) { setErrorFilial('Seleccioná una filial'); return; }
+    try {
+      const res = await exportarAfiliadosFilial(filialSeleccionada);
+      descargar(res.data, 'afiliados_filial.xlsx');
+    } catch { alert('Error al exportar'); }
+  };
+
   return (
     <div className="page">
       <div className="page-header">
@@ -215,6 +247,7 @@ export default function Reportes() {
         {[
           { id: 'conciliacion', label: 'Conciliación mensual' },
           { id: 'exportar', label: 'Exportar' },
+          { id: 'filial', label: 'Afiliados por filial' },
         ].map(t => (
           <button key={t.id} onClick={() => setTab(t.id)}
             style={{
@@ -570,6 +603,73 @@ export default function Reportes() {
           </div>
 
         </div>
+      )}
+
+      {/* Tab filial */}
+      {tab === 'filial' && (
+        <>
+          <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap', alignItems: 'flex-end', marginBottom: 24 }}>
+            <div className="form-group" style={{ margin: 0 }}>
+              <label>Filial</label>
+              <select className="form-control" value={filialSeleccionada}
+                onChange={e => { setFilialSeleccionada(e.target.value); setAfiliadosFilial(null); }}>
+                <option value="">— Seleccioná —</option>
+                {ubicaciones.filter(u => u.Tipo === 'Filial').map(u =>
+                  <option key={u.Id} value={u.Id}>{u.Nombre}</option>
+                )}
+              </select>
+            </div>
+            <button className="btn-primary btn-inline" onClick={buscarAfiliadosFilial}>Ver listado</button>
+            <button className="btn-sm" onClick={handleExportarAfiliadosFilial}>Exportar Excel</button>
+          </div>
+
+          {errorFilial && <p style={{ color: 'var(--error)' }}>{errorFilial}</p>}
+          {loadingFilial && <p>Cargando...</p>}
+
+          {afiliadosFilial && (
+            afiliadosFilial.length === 0 ? (
+              <p style={{ color: 'var(--text)' }}>No hay afiliados en esta filial.</p>
+            ) : (
+              <>
+                <p style={{ marginBottom: 12, fontSize: 13, color: 'var(--text)' }}>
+                  {afiliadosFilial.length} afiliado{afiliadosFilial.length !== 1 ? 's' : ''}
+                </p>
+                <div style={{ overflowX: 'auto' }}>
+                  <table className="tabla">
+                    <thead>
+                      <tr>
+                        <th>Nº Func.</th>
+                        <th>Documento</th>
+                        <th>Nombre</th>
+                        <th>Apellido</th>
+                        <th>Celular</th>
+                        <th>Mail</th>
+                        <th>Banco</th>
+                        <th>Nº Cuenta</th>
+                        <th>Empresa envío</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {afiliadosFilial.map(a => (
+                        <tr key={a.Id}>
+                          <td>{a.NroFuncionario || '—'}</td>
+                          <td>{a.Documento}</td>
+                          <td>{a.PrimerNombre} {a.SegundoNombre || ''}</td>
+                          <td>{a.PrimerApellido} {a.SegundoApellido || ''}</td>
+                          <td>{a.Celular?.trim() || '—'}</td>
+                          <td>{a.Mail || '—'}</td>
+                          <td>{a.Banco || '—'}</td>
+                          <td>{a.NroCuenta || '—'}</td>
+                          <td>{a.EmpresaEnvio || '—'}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </>
+            )
+          )}
+        </>
       )}
     </div>
   );

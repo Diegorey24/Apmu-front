@@ -4,7 +4,8 @@ import Sidebar from '../components/Sidebar';
 import ConfirmDialogHost from '../components/ConfirmDialog';
 import { getRole, clearSession } from '../utils/auth';
 
-const RUTA_PERMITIDA_CONSULTA = '/afiliados';
+const RUTAS_PERMITIDAS_CONSULTA = ['/afiliados', '/licencias-gremiales'];
+const RUTA_REDIRECT_CONSULTA = '/afiliados';
 
 function DashboardLayout() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -22,10 +23,10 @@ function DashboardLayout() {
     navigate('/login', { replace: true });
   };
 
-  // El rol Consulta solo puede navegar dentro de Afiliados; cualquier otra
-  // ruta del panel (incluso tecleada a mano) redirige ahí.
-  if (rol === 'Consulta' && !location.pathname.startsWith(RUTA_PERMITIDA_CONSULTA)) {
-    return <Navigate to={RUTA_PERMITIDA_CONSULTA} replace />;
+  // El rol Consulta solo puede navegar dentro de Afiliados y Licencias gremiales;
+  // cualquier otra ruta del panel (incluso tecleada a mano) redirige a Afiliados.
+  if (rol === 'Consulta' && !RUTAS_PERMITIDAS_CONSULTA.some(r => location.pathname.startsWith(r))) {
+    return <Navigate to={RUTA_REDIRECT_CONSULTA} replace />;
   }
 
   return (

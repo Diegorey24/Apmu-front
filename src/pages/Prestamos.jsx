@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
+import * as XLSX from 'xlsx';
 import { getPrestamos, getPrestamoById, createPrestamo, devolverLibro } from '../api/prestamos';
 import { searchAfiliados } from '../api/afiliados';
 import { getLibros } from '../api/libros';
@@ -20,6 +21,11 @@ export default function Prestamos() {
   const [total, setTotal] = useState(0);
   const LIMIT = 20;
   const totalPages = Math.ceil(total / LIMIT);
+
+  // Exportar/imprimir (todos los registros, no solo la página actual)
+  const [printData, setPrintData] = useState(null);
+  const [exporting, setExporting] = useState(false);
+  const [printing, setPrinting] = useState(false);
 
   // Modal detalle
   const [detalle, setDetalle] = useState(null);
@@ -79,6 +85,62 @@ export default function Prestamos() {
     setFiltroAfiliado('');
     setPage(1);
     cargar({ estado: 'Activo' }, 1);
+  };
+
+  useEffect(() => {
+    if (!printData) return;
+    const timer = setTimeout(() => window.print(), 100);
+    return () => clearTimeout(timer);
+  }, [printData]);
+
+  useEffect(() => {
+    const onAfterPrint = () => setPrintData(null);
+    window.addEventListener('afterprint', onAfterPrint);
+    return () => window.removeEventListener('afterprint', onAfterPrint);
+  }, []);
+
+  const cargarTodos = () => getPrestamos({
+    estado: filtroEstado || undefined,
+    idAfiliado: filtroAfiliado || undefined,
+    page: 1,
+    limit: 99999,
+  });
+
+  const exportarExcel = async () => {
+    setExporting(true);
+    try {
+      const res = await cargarTodos();
+      const filas = (res.data.data || []).map(p => ({
+        '#': p.Id,
+        Afiliado: p.NombreAfiliado,
+        Documento: p.Documento,
+        'Nº Func.': p.NroFuncionario || '',
+        Fecha: p.FechaPrestamo ? formatFecha(p.FechaPrestamo) : '',
+        Libros: p.CantLibros,
+        Devueltos: p.CantDevueltos,
+        Estado: p.Estado,
+      }));
+      const hoja = XLSX.utils.json_to_sheet(filas);
+      const libro = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(libro, hoja, 'Préstamos');
+      XLSX.writeFile(libro, 'prestamos_libros.xlsx');
+    } catch {
+      alert('Error al exportar.');
+    } finally {
+      setExporting(false);
+    }
+  };
+
+  const imprimir = async () => {
+    setPrinting(true);
+    try {
+      const res = await cargarTodos();
+      setPrintData(res.data.data || []);
+    } catch {
+      alert('Error al preparar la impresión.');
+    } finally {
+      setPrinting(false);
+    }
   };
 
   // Autocomplete afiliado
@@ -238,6 +300,12 @@ export default function Prestamos() {
         <button className="btn-primary btn-inline" onClick={aplicarFiltros}>Buscar</button>
         <button className="btn-sm" onClick={limpiarFiltros}>Limpiar</button>
         <button className="btn-sm" onClick={abrirConfig}>Configurar precio</button>
+        <button className="btn-sm no-print" onClick={exportarExcel} disabled={exporting}>
+          {exporting ? 'Exportando…' : 'Exportar Excel'}
+        </button>
+        <button className="btn-sm no-print" onClick={imprimir} disabled={printing}>
+          {printing ? 'Preparando…' : 'Imprimir'}
+        </button>
       </div>
 
       {loading ? <p>Cargando...</p> : (
@@ -277,6 +345,42 @@ export default function Prestamos() {
             ))}
           </tbody>
         </table>
+      )}
+
+      {printData && (
+        <div className="print-area">
+          <h2 className="print-title">PRÉSTAMOS DE LIBROS</h2>
+          <table className="tabla">
+            <thead>
+              <tr>
+                <th>#</th>
+                <th>Afiliado</th>
+                <th>Documento</th>
+                <th>Nº Func.</th>
+                <th>Fecha</th>
+                <th>Libros</th>
+                <th>Devueltos</th>
+                <th>Estado</th>
+              </tr>
+            </thead>
+            <tbody>
+              {printData.length === 0 ? (
+                <tr><td colSpan={8}>No hay préstamos</td></tr>
+              ) : printData.map(p => (
+                <tr key={p.Id}>
+                  <td>{p.Id}</td>
+                  <td>{p.NombreAfiliado}</td>
+                  <td>{p.Documento}</td>
+                  <td>{p.NroFuncionario || '—'}</td>
+                  <td>{formatFecha(p.FechaPrestamo)}</td>
+                  <td>{p.CantLibros}</td>
+                  <td>{p.CantDevueltos}</td>
+                  <td>{p.Estado}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
       )}
 
       {totalPages > 1 && (
