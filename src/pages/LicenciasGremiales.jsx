@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
+import { getRole } from '../utils/auth';
 import * as XLSX from 'xlsx';
 import { getLicencias, createLicencia, updateLicencia, deleteLicencia } from '../api/licenciasgremiales';
 import { searchAfiliados } from '../api/afiliados';
@@ -27,6 +28,8 @@ export default function LicenciasGremiales() {
     const [sugerencias, setSugerencias] = useState([]);
     const [afiliadoSeleccionado, setAfiliadoSeleccionado] = useState(null);
     const timeoutRef = useRef(null);
+
+    const esConsulta = getRole() === 'Consulta';
 
     const cargar = async (filtros = {}) => {
         setLoading(true);
@@ -152,7 +155,7 @@ export default function LicenciasGremiales() {
         <div className="page">
             <div className="page-header">
                 <h1>Licencias gremiales</h1>
-                <button className="btn-primary btn-inline" onClick={abrirCrear}>+ Nueva licencia</button>
+                {!esConsulta && <button className="btn-primary btn-inline" onClick={abrirCrear}>+ Nueva licencia</button>}
             </div>
 
             <div className="toolbar" style={{ flexWrap: 'wrap', alignItems: 'flex-end' }}>
@@ -174,42 +177,44 @@ export default function LicenciasGremiales() {
 
             {loading ? <p>Cargando...</p> : (
                 <div className="print-area">
-                <h2 className="print-title">LICENCIAS GREMIALES</h2>
-                <table className="tabla">
-                    <thead>
-                        <tr>
-                            <th>Afiliado</th>
-                            <th>Nº Func.</th>
-                            <th>Cargo/Sector</th>
-                            <th>Horario</th>
-                            <th>Fecha</th>
-                            <th>Solicitada por</th>
-                            <th>Pedida por</th>
-                            <th>Convocatoria</th>
-                            <th className="no-print">Acciones</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {licencias.length === 0 ? (
-                            <tr><td colSpan={9}>No hay licencias</td></tr>
-                        ) : licencias.map(l => (
-                            <tr key={l.Id}>
-                                <td>{l.NombreAfiliado}</td>
-                                <td>{l.NroFuncionario || '—'}</td>
-                                <td>{[l.Cargo, l.Sector].filter(Boolean).join(' / ') || '—'}</td>
-                                <td>{l.Horario || '—'}</td>
-                                <td>{l.FechaLicencia?.substring(0, 10)}</td>
-                                <td>{l.SolicitadaPor || '—'}</td>
-                                <td>{l.PedidaPor || '—'}</td>
-                                <td>{l.Convocatoria || '—'}</td>
-                                <td className="no-print">
-                                    <button className="btn-sm" onClick={() => abrirEditar(l)}>Editar</button>
-                                    <button className="btn-sm danger" onClick={() => eliminar(l)}>Eliminar</button>
-                                </td>
+                    <h2 className="print-title">LICENCIAS GREMIALES</h2>
+                    <table className="tabla">
+                        <thead>
+                            <tr>
+                                <th>Afiliado</th>
+                                <th>Nº Func.</th>
+                                <th>Cargo/Sector</th>
+                                <th>Horario</th>
+                                <th>Fecha</th>
+                                <th>Solicitada por</th>
+                                <th>Pedida por</th>
+                                <th>Convocatoria</th>
+                                {!esConsulta && <th className="no-print">Acciones</th>}
                             </tr>
-                        ))}
-                    </tbody>
-                </table>
+                        </thead>
+                        <tbody>
+                            {licencias.length === 0 ? (
+                                <tr><td colSpan={9}>No hay licencias</td></tr>
+                            ) : licencias.map(l => (
+                                <tr key={l.Id}>
+                                    <td>{l.NombreAfiliado}</td>
+                                    <td>{l.NroFuncionario || '—'}</td>
+                                    <td>{[l.Cargo, l.Sector].filter(Boolean).join(' / ') || '—'}</td>
+                                    <td>{l.Horario || '—'}</td>
+                                    <td>{l.FechaLicencia?.substring(0, 10)}</td>
+                                    <td>{l.SolicitadaPor || '—'}</td>
+                                    <td>{l.PedidaPor || '—'}</td>
+                                    <td>{l.Convocatoria || '—'}</td>
+                                    {!esConsulta && (
+                                        <td className="no-print">
+                                            <button className="btn-sm" onClick={() => abrirEditar(l)}>Editar</button>
+                                            <button className="btn-sm danger" onClick={() => eliminar(l)}>Eliminar</button>
+                                        </td>
+                                    )}
+                                </tr>
+                            ))}
+                        </tbody>
+                    </table>
                 </div>
             )}
 
@@ -284,8 +289,8 @@ export default function LicenciasGremiales() {
 
                 {error && <span className="error" style={{ display: 'block', marginBottom: 8 }}>{error}</span>}
                 <div className="modal-actions">
-                    <button className="btn-sm" onClick={() => setModalOpen(false)}>Cancelar</button>
-                    <button className="btn-primary btn-inline" onClick={guardar}>Guardar</button>
+                    <button className="btn-sm" onClick={() => setModalOpen(false)}>{esConsulta ? 'Cerrar' : 'Cancelar'}</button>
+                    {!esConsulta && <button className="btn-primary btn-inline" onClick={guardar}>Guardar</button>}
                 </div>
             </Modal>
         </div>
