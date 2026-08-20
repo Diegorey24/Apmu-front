@@ -61,7 +61,7 @@ export default function PortalLogin() {
         borderRadius: 16, boxShadow: '0 4px 24px rgba(0,0,0,0.08)'
       }}>
         <div style={{ textAlign: 'center', marginBottom: 20 }}>
-          <img src="/apmu/apmu-5.jpg" alt="APMU" style={{ width: 80, borderRadius: 12 }} />
+          <img src="/apmu-5.jpg" alt="APMU" style={{ width: 80, borderRadius: 12 }} />
         </div>
         <h1 style={{ margin: '0 0 4px', fontSize: 22, fontWeight: 600 }}>Portal APMU</h1>
         <p style={{ margin: '0 0 24px', color: 'var(--color-text-secondary)', fontSize: 14 }}>
@@ -113,7 +113,7 @@ export default function PortalLogin() {
       </div>
       </div>
       <div style={{ textAlign: 'center', padding: '8px 0' }}>
-        <img src="/apmu/Macrosoft.png" alt="Macrosoft" style={{ height: 16, opacity: 0.6 }} />
+        <img src="/Macrosoft.png" alt="Macrosoft" style={{ height: 16, opacity: 0.6 }} />
       </div>
     </div>
   );
