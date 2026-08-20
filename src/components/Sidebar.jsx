@@ -112,6 +112,9 @@ function Sidebar({ isOpen, onClose }) {
           <NavLink to="/licencias-gremiales" onClick={handleNav}>
             Licencias gremiales
           </NavLink>
+          <NavLink to="/cambiar-password" onClick={handleNav}>
+            Cambiar contraseña
+          </NavLink>
         </nav>
         <button className="sidebar-logout" onClick={logout}>Cerrar sesión</button>
       </aside>
@@ -185,6 +188,10 @@ function Sidebar({ isOpen, onClose }) {
             </div>
           );
         })}
+
+        <NavLink to="/cambiar-password" onClick={handleNav}>
+          Cambiar contraseña
+        </NavLink>
       </nav>
 
       <button className="sidebar-logout" onClick={logout}>Cerrar sesión</button>

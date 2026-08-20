@@ -31,6 +31,8 @@ import ImportacionAportes from './pages/ImportacionAportes';
 import LicenciasGremiales from './pages/LicenciasGremiales';
 import Beneficios from './pages/Beneficios';
 import GestionSolicitudesPrestamo from './pages/GestionSolicitudesPrestamo';
+import CambiarPassword from './pages/CambiarPassword';
+import PortalCambiarPassword from './pages/portal/PortalCambiarPassword';
 
 function App() {
   return (
@@ -41,6 +43,7 @@ function App() {
         {/* Portal del socio */}
         <Route path="/portal/login" element={<PortalLogin />} />
         <Route path="/portal" element={<PortalHome />} />
+        <Route path="/portal/cambiar-password" element={<PortalCambiarPassword />} />
         <Route path="/solicitud-afiliacion" element={<SolicitudAfiliacion />} />
 
         <Route
@@ -77,6 +80,7 @@ function App() {
           <Route path="licencias-gremiales" element={<LicenciasGremiales />} />
           <Route path="beneficios" element={<Beneficios />} />
           <Route path="solicitudes-prestamo" element={<GestionSolicitudesPrestamo />} />
+          <Route path="cambiar-password" element={<CambiarPassword />} />
         </Route>
 
         <Route path="*" element={<Navigate to="/login" replace />} />

@@ -179,8 +179,25 @@ export default function PortalHome() {
           <span style={{ width: 1, height: 18, background: 'rgba(255,255,255,0.3)' }} />
           <span style={{ fontSize: 13, color: 'rgba(255,255,255,0.82)', fontWeight: 400 }}>Portal del socio</span>
         </div>
-        <button
-          onClick={cerrarSesion}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+          <button
+            onClick={() => navigate('/portal/cambiar-password')}
+            style={{
+              background: 'rgba(255,255,255,0.14)',
+              border: '1px solid rgba(255,255,255,0.28)',
+              borderRadius: 8,
+              color: '#fff',
+              padding: '6px 14px',
+              fontSize: 13,
+              fontWeight: 500,
+              cursor: 'pointer',
+              fontFamily: 'var(--sans)',
+            }}
+          >
+            Cambiar contraseña
+          </button>
+          <button
+            onClick={cerrarSesion}
           style={{
             background: 'rgba(255,255,255,0.14)',
             border: '1px solid rgba(255,255,255,0.28)',
@@ -194,7 +211,8 @@ export default function PortalHome() {
           }}
         >
           Cerrar sesión
-        </button>
+          </button>
+        </div>
       </div>
 
       <div style={{ maxWidth: 900, margin: '0 auto', padding: '28px 24px' }}>
