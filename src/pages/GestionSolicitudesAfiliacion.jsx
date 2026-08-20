@@ -141,6 +141,21 @@ export default function GestionSolicitudesAfiliacion() {
                         {modalDetalle.Observaciones && (
                             <div style={{ gridColumn: '1 / -1' }}><strong>Observaciones:</strong> {modalDetalle.Observaciones}</div>
                         )}
+                        {(() => {
+                            let hijos = [];
+                            try { hijos = modalDetalle.HijosJson ? JSON.parse(modalDetalle.HijosJson) : []; } catch { hijos = []; }
+                            if (!hijos.length) return null;
+                            return (
+                                <div style={{ gridColumn: '1 / -1' }}>
+                                    <strong>Hijos:</strong>
+                                    <ul style={{ margin: '4px 0 0', paddingLeft: 20 }}>
+                                        {hijos.map((h, i) => (
+                                            <li key={i}>{h.nombre} — C.I. {h.documento} — {h.fechaNacimiento?.substring(0, 10)}</li>
+                                        ))}
+                                    </ul>
+                                </div>
+                            );
+                        })()}
                     </div>
                 )}
             </Modal>
