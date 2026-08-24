@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import * as XLSX from 'xlsx';
-import { getPrestamos, getPrestamoById, createPrestamo, devolverLibro } from '../api/prestamos';
+import { getPrestamos, searchPrestamos, getPrestamoById, createPrestamo, devolverLibro } from '../api/prestamos';
 import { searchAfiliados } from '../api/afiliados';
 import { getLibros } from '../api/libros';
 import { getConfiguracion, updateConfiguracion } from '../api/configuracion';
@@ -16,6 +16,11 @@ export default function Prestamos() {
   // Filtros lista
   const [filtroEstado, setFiltroEstado] = useState('Activo');
   const [filtroAfiliado, setFiltroAfiliado] = useState('');
+
+  // Buscador (Id, documento, Nº funcionario, nombre/apellido)
+  const [busqueda, setBusqueda] = useState('');
+  const [modoBusqueda, setModoBusqueda] = useState(false);
+  const timeoutBusqueda = useRef(null);
 
   const [page, setPage] = useState(1);
   const [total, setTotal] = useState(0);
@@ -75,14 +80,58 @@ export default function Prestamos() {
     }
   }, []);
 
+  const buscar = async (termino) => {
+    const q = (termino ?? busqueda).trim();
+    if (!q) {
+      setModoBusqueda(false);
+      setPage(1);
+      cargar({ estado: filtroEstado || undefined, idAfiliado: filtroAfiliado || undefined }, 1);
+      return;
+    }
+    setLoading(true);
+    setModoBusqueda(true);
+    setPage(1);
+    try {
+      const res = await searchPrestamos(q);
+      const filas = res.data.data || [];
+      setPrestamos(filas);
+      setTotal(filas.length);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Refresca la lista respetando el modo actual (búsqueda o filtros)
+  const recargar = () => modoBusqueda
+    ? buscar()
+    : cargar({ estado: filtroEstado || undefined, idAfiliado: filtroAfiliado || undefined }, page);
+
+  const onBusquedaChange = (valor) => {
+    setBusqueda(valor);
+    clearTimeout(timeoutBusqueda.current);
+    timeoutBusqueda.current = setTimeout(() => buscar(valor), 400);
+  };
+
+  const limpiarBusqueda = () => {
+    clearTimeout(timeoutBusqueda.current);
+    setBusqueda('');
+    buscar('');
+  };
+
   const aplicarFiltros = () => {
+    clearTimeout(timeoutBusqueda.current);
+    if (busqueda.trim()) { buscar(); return; }
+    setModoBusqueda(false);
     setPage(1);
     cargar({ estado: filtroEstado || undefined, idAfiliado: filtroAfiliado || undefined }, 1);
   };
 
   const limpiarFiltros = () => {
+    clearTimeout(timeoutBusqueda.current);
     setFiltroEstado('Activo');
     setFiltroAfiliado('');
+    setBusqueda('');
+    setModoBusqueda(false);
     setPage(1);
     cargar({ estado: 'Activo' }, 1);
   };
@@ -99,12 +148,15 @@ export default function Prestamos() {
     return () => window.removeEventListener('afterprint', onAfterPrint);
   }, []);
 
-  const cargarTodos = () => getPrestamos({
-    estado: filtroEstado || undefined,
-    idAfiliado: filtroAfiliado || undefined,
-    page: 1,
-    limit: 99999,
-  });
+  // En modo búsqueda el endpoint ya devuelve todos los resultados, no hay paginación
+  const cargarTodos = () => modoBusqueda
+    ? searchPrestamos(busqueda.trim())
+    : getPrestamos({
+      estado: filtroEstado || undefined,
+      idAfiliado: filtroAfiliado || undefined,
+      page: 1,
+      limit: 99999,
+    });
 
   const exportarExcel = async () => {
     setExporting(true);
@@ -216,7 +268,7 @@ export default function Prestamos() {
         })),
       });
       setModalCrearOpen(false);
-      cargar({ estado: filtroEstado });
+      recargar();
     } catch (err) {
       setErrorCrear(err.response?.data?.message || 'Error al guardar');
     }
@@ -263,7 +315,7 @@ export default function Prestamos() {
       // Recargar detalle
       const res = await getPrestamoById(detalle.Id);
       setDetalle(res.data.data);
-      cargar({ estado: filtroEstado });
+      recargar();
     } catch (err) {
       alert(err.response?.data?.message || 'Error');
     }
@@ -290,6 +342,26 @@ export default function Prestamos() {
       </div>
 
       <div className="toolbar">
+        <div className="search-box">
+          <svg className="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+            strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+            <circle cx="11" cy="11" r="7" />
+            <line x1="21" y1="21" x2="16.65" y2="16.65" />
+          </svg>
+          <input
+            className="search-input"
+            placeholder="Documento, Nº func. o nombre..."
+            value={busqueda}
+            onChange={e => onBusquedaChange(e.target.value)}
+            onKeyDown={e => {
+              if (e.key === 'Enter') { clearTimeout(timeoutBusqueda.current); buscar(); }
+              if (e.key === 'Escape') limpiarBusqueda();
+            }}
+          />
+          {busqueda && (
+            <button className="search-clear" onClick={limpiarBusqueda} title="Limpiar búsqueda">×</button>
+          )}
+        </div>
         <select value={filtroEstado}
           onChange={e => setFiltroEstado(e.target.value)}>
           <option value="">Todos los estados</option>
@@ -325,7 +397,7 @@ export default function Prestamos() {
           </thead>
           <tbody>
             {prestamos.length === 0 ? (
-              <tr><td colSpan={9}>No hay préstamos</td></tr>
+              <tr><td colSpan={9}>{modoBusqueda ? 'No se encontraron préstamos' : 'No hay préstamos'}</td></tr>
             ) : prestamos.map(p => (
               <tr key={p.Id}>
                 <td>{p.Id}</td>
@@ -383,7 +455,13 @@ export default function Prestamos() {
         </div>
       )}
 
-      {totalPages > 1 && (
+      {modoBusqueda && !loading && (
+        <p className="pagination-info" style={{ marginTop: 8 }}>
+          {total} resultado{total === 1 ? '' : 's'} para "{busqueda.trim()}"
+        </p>
+      )}
+
+      {!modoBusqueda && totalPages > 1 && (
         <div className="pagination">
           <span className="pagination-info">{total} préstamos — Página {page} de {totalPages}</span>
           <button className="page-btn" onClick={() => { setPage(page - 1); cargar({ estado: filtroEstado || undefined, idAfiliado: filtroAfiliado || undefined }, page - 1); }} disabled={page === 1}>← Anterior</button>

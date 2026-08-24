@@ -409,6 +409,45 @@ h2 {
   border-color: var(--accent);
 }
 
+/* Input de búsqueda con lupa */
+.search-box {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+}
+
+.search-box .search-input {
+  padding-left: 34px;
+  padding-right: 30px;
+}
+
+.search-box .search-icon {
+  position: absolute;
+  left: 11px;
+  width: 15px;
+  height: 15px;
+  color: var(--text);
+  opacity: 0.6;
+  pointer-events: none;
+}
+
+.search-box .search-clear {
+  position: absolute;
+  right: 7px;
+  padding: 2px 5px;
+  border: none;
+  background: none;
+  color: var(--text);
+  opacity: 0.6;
+  font-size: 16px;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.search-box .search-clear:hover {
+  opacity: 1;
+}
+
 .toolbar select:disabled {
   opacity: 0.55;
   cursor: not-allowed;
@@ -794,6 +833,10 @@ tbody tr:hover {
   }
 
   .search-input {
+    width: 100%;
+  }
+
+  .search-box {
     width: 100%;
   }
 

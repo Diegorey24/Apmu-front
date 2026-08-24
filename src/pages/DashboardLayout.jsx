@@ -3,6 +3,7 @@ import { Outlet, useNavigate, useLocation, Navigate } from 'react-router-dom';
 import Sidebar from '../components/Sidebar';
 import ConfirmDialogHost from '../components/ConfirmDialog';
 import { getRole, clearSession } from '../utils/auth';
+import macrosoftLogo from '../assets/Macrosoft.png';
 
 const RUTAS_PERMITIDAS_CONSULTA = ['/afiliados', '/licencias-gremiales'];
 const RUTA_REDIRECT_CONSULTA = '/afiliados';
@@ -49,7 +50,7 @@ function DashboardLayout() {
       <main className="layout-main">
         <Outlet />
         <div style={{ textAlign: 'center', padding: '8px 0', borderTop: '1px solid var(--border)', marginTop: 'auto' }}>
-          <img src="/apmu/Macrosoft.png" alt="Macrosoft" style={{ height: 16, opacity: 0.5 }} />
+          <img src={macrosoftLogo} alt="Macrosoft" style={{ height: 25 }} />
         </div>
       </main>
     </div>
