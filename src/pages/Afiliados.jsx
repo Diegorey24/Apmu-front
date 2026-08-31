@@ -25,7 +25,7 @@ const EMPTY = {
   Domicilio: '', Ciudad: '', Localidad: '',
   CodigoPostal: '', Departamento: '', Observacion: '',
   NroFuncionario: '', Cargo: '', Sector: '', Turno: '',
-  FechaIngreso: '', IdCategoria: '', IdUbicacion: '',
+  FechaIngreso: '', FechaAlta: '', IdCategoria: '', IdUbicacion: '',
   Banco: '', NroCuenta: '', EmpresaEnvio: '',
 };
 const toDateInput = (val) => (val ? val.substring(0, 10) : '');
@@ -186,6 +186,7 @@ function Afiliados() {
       Sector: record.Sector || '',
       Turno: record.Turno || '',
       FechaIngreso: toDateInput(record.FechaIngreso),
+      FechaAlta: toDateInput(record.FechaAlta),
       IdCategoria: record.IdCategoria || '',
       IdUbicacion: record.IdUbicacion || '',
       Banco: record.Banco || '',
@@ -696,6 +697,10 @@ function Afiliados() {
                 <div className="form-group">
                   <label htmlFor="FechaIngreso">Fecha de ingreso</label>
                   <input type="date" id="FechaIngreso" name="FechaIngreso" value={form.FechaIngreso} onChange={handleChange} />
+                </div>
+                <div className="form-group">
+                  <label htmlFor="FechaAlta">Fecha de alta APMU</label>
+                  <input type="date" id="FechaAlta" name="FechaAlta" value={form.FechaAlta} onChange={handleChange} />
                 </div>
                 <div className="form-group">
                   <label htmlFor="Cargo">Cargo</label>
